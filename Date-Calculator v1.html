@@ -1,0 +1,3487 @@
+<!DOCTYPE html>
+<!--
+  RE Transaction Date Calculator
+  Version 1.0 — March 2026
+  Written with the assistance of Claude (Anthropic)
+
+  To the extent possible under law, the author has waived all copyright
+  and related or neighboring rights to this work.
+
+  Creative Commons Zero v1.0 Universal (CC0 1.0)
+  https://creativecommons.org/publicdomain/zero/1.0/
+
+  This work is published from the United States of America.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RE Transaction Date Calculator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;color:#1e293b;min-height:100vh}
+
+/* ── Header ── */
+.app-header{background:#0f172a;color:white;padding:.65rem 1.25rem;display:flex;align-items:center;gap:.85rem;flex-wrap:wrap;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.app-title{font-size:1rem;font-weight:700;color:#60a5fa;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:.4rem}
+.mode-tabs{display:flex;gap:.3rem;flex-shrink:0;flex-wrap:wrap}
+.mode-tab{padding:.3rem .75rem;border:1.5px solid #cbd5e1;background:white;color:#475569;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .15s;white-space:nowrap}
+.mode-tab:hover{background:#f1f5f9;border-color:#94a3b8;color:#0f172a}
+.mode-tab.active{background:#1d4ed8;border-color:#1d4ed8;color:white}
+.header-actions{display:flex;gap:.4rem;flex-shrink:0}
+.btn-icon{padding:.35rem .7rem;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:6px;cursor:pointer;font-size:.8rem;display:flex;align-items:center;gap:.35rem;transition:all .15s;white-space:nowrap}
+.btn-icon:hover{background:#334155;color:#e2e8f0}
+
+/* ── Main ── */
+.main-content{max-width:1800px;margin:1.25rem auto;padding:0 1rem 3rem}
+
+/* ── Banner inputs ── */
+.banner-row{background:white;border-radius:10px;padding:.85rem 1.25rem;margin-bottom:.75rem;box-shadow:0 1px 3px rgba(0,0,0,.09);display:flex;align-items:center;gap:.85rem;flex-wrap:wrap}
+.banner-row label{font-weight:600;font-size:.9rem;color:#0f172a;white-space:nowrap}
+.banner-row input[type=date]{padding:.35rem .55rem;border:1.5px solid #cbd5e1;border-radius:6px;font-size:.88rem;color:#0f172a;cursor:pointer;background:white}
+.banner-row input[type=date]:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+
+/* ── Custom mode hint ── */
+.custom-hint{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:.65rem 1rem;margin-bottom:.85rem;font-size:.82rem;color:#1d4ed8}
+
+/* ── Group sections ── */
+.group-section{margin-bottom:1.25rem}
+.group-header{display:flex;align-items:center;gap:.5rem;color:white;padding:.45rem .9rem;border-radius:8px 8px 0 0;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.group-header .group-icon{font-size:.9rem}
+
+/* ── Group table ── */
+.group-table{width:100%;border-collapse:collapse;background:white;box-shadow:0 1px 4px rgba(0,0,0,.09);border-radius:0 0 8px 8px;overflow:hidden}
+.group-table thead tr{background:#f8fafc}
+.group-table th{text-align:left;font-size:.69rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;padding:.4rem .75rem;border-bottom:1.5px solid #e2e8f0}
+.group-table th.col-days{text-align:center}
+.group-table td{padding:.52rem .75rem;border-bottom:1px solid #f1f5f9;vertical-align:top;font-size:.87rem}
+.group-table tr:last-child td{border-bottom:none}
+.group-table tbody tr:hover td{background:#f8fafc}
+.group-table tbody tr.row-overridden td{background:#fffbeb}
+.group-table tbody tr.row-overridden td:first-child{border-left:3px solid #f59e0b}
+.group-table tbody tr.row-warn td:first-child{border-left:3px solid #ef4444}
+.group-table tbody tr.row-closing-warn td{background:#fef2f2}
+.group-table tbody tr.row-closing-warn td:first-child{border-left:3px solid #dc2626}
+.group-table tbody tr.row-closing-warn .ms-name{color:#dc2626;font-weight:700}
+.group-table tbody tr.row-awaiting{opacity:.65}
+.group-table tbody tr.row-input td{background:#f0fdf4}
+.group-table tbody tr.row-input td:first-child{border-left:3px solid #86efac}
+.group-table tbody tr.row-ignored td{opacity:.38}
+.group-table tbody tr.row-ignored .ms-name{text-decoration:line-through;color:#94a3b8}
+.group-table tbody tr.row-ignored td:first-child{border-left:3px solid #cbd5e1}
+/* Ignore controls */
+/* Shared header pill — loan and section-level toggles */
+.btn-hdr-pill{margin-left:auto;padding:.2rem .65rem;background:rgba(30,41,59,.5);color:#94a3b8;border:1px solid #475569;border-radius:20px;cursor:pointer;font-size:.72rem;font-weight:600;transition:all .15s;white-space:nowrap;letter-spacing:.01em}
+.btn-hdr-pill:hover{background:rgba(30,41,59,.85);color:#e2e8f0}
+.btn-hdr-pill.yes{background:rgba(6,78,59,.65);color:#6ee7b7;border-color:#065f46}
+.btn-hdr-pill.yes:hover{background:rgba(6,78,59,.9)}
+/* Row-level skip pill */
+.btn-skip{padding:.15rem .5rem;background:transparent;color:#94a3b8;border:1px solid #e2e8f0;border-radius:20px;cursor:pointer;font-size:.68rem;font-weight:600;transition:all .15s;white-space:nowrap}
+.btn-skip:hover{border-color:#94a3b8;color:#475569}
+.btn-skip.skipped{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
+.btn-skip.skipped:hover{background:#fee2e2}
+/* Calendar export button */
+.btn-preset-save{padding:.35rem .7rem;background:#3b1f6e;color:#c4b5fd;border:1px solid #5b21b6;border-radius:6px;cursor:pointer;font-size:.8rem;display:flex;align-items:center;gap:.35rem;transition:all .15s;white-space:nowrap}
+.btn-preset-save:hover{background:#5b21b6;color:#ede9fe}
+.btn-preset-save-inline{padding:.3rem .65rem;background:#3b1f6e;color:#c4b5fd;border:1px solid #5b21b6;border-radius:6px;cursor:pointer;font-size:.78rem;display:inline-flex;align-items:center;gap:.3rem;transition:all .15s;white-space:nowrap}
+.btn-preset-save-inline:hover{background:#5b21b6;color:#ede9fe}
+.btn-more{padding:.35rem .7rem;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:6px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;gap:.2rem;transition:all .15s;white-space:nowrap;position:relative}
+.btn-more:hover{background:#334155;color:#e2e8f0}
+.more-menu{position:absolute;top:calc(100% + .4rem);right:0;background:#1e293b;border:1px solid #334155;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:150;min-width:180px;overflow:hidden;display:none}
+.more-menu.open{display:block}
+.more-menu a,.more-menu button{display:flex;align-items:center;gap:.55rem;width:100%;padding:.6rem 1rem;background:none;border:none;border-bottom:1px solid #334155;color:#cbd5e1;font-size:.83rem;cursor:pointer;text-decoration:none;text-align:left;transition:background .12s}
+.more-menu a:last-child,.more-menu button:last-child{border-bottom:none}
+.more-menu a:hover,.more-menu button:hover{background:#334155;color:white}
+.more-menu .menu-icon{font-size:.95rem;width:1.2rem;text-align:center;flex-shrink:0}
+/* Loan toggle button */
+
+/* Column widths */
+.col-milestone{width:36%}
+.col-anchor{width:16%}
+.col-days{width:13%;text-align:center}
+.col-date{width:30%}
+.col-ignore{width:5%;text-align:center;vertical-align:middle}
+.col-ignore td{display:table-cell;text-align:center;vertical-align:middle}
+.col-ignore .btn-skip{display:block;margin:0 auto}
+
+/* Milestone cell */
+.ms-num{display:inline;font-size:.68rem;font-weight:600;color:#94a3b8;margin-right:.18rem}
+.ms-name{font-weight:600;color:#0f172a;line-height:1.3}
+.ms-name.ov{color:#b45309}
+.ms-edit-badge{display:inline-block;font-size:.68rem;color:#d97706;margin-left:.3rem;vertical-align:middle}
+
+/* Days cell */
+.days-zero{color:#94a3b8;font-size:.87rem}
+.days-default{color:#94a3b8;font-size:.82rem;font-style:italic}
+.days-input{color:#16a34a;font-size:.8rem;font-weight:600}
+
+/* Anchor cell */
+.anchor-name{color:#475569;font-size:.84rem}
+.anchor-sel{font-size:.75rem;color:#475569;border:1px solid #e2e8f0;border-radius:5px;padding:.2rem .3rem;background:#f8fafc;cursor:pointer;width:100%;max-width:200px}
+.anchor-sel:focus{outline:none;border-color:#3b82f6}
+.anchor-toggle{margin-top:.3rem}
+.tgl-group{display:flex;border:1px solid #e2e8f0;border-radius:5px;overflow:hidden;width:fit-content}
+.tgl-btn{padding:.18rem .45rem;background:white;border:none;cursor:pointer;font-size:.69rem;color:#64748b;transition:all .15s;white-space:nowrap}
+.tgl-btn.active{background:#3b82f6;color:white}
+
+/* Date cell */
+.date-awaiting{color:#94a3b8;font-style:italic;font-size:.8rem}
+.effective-date{display:block;font-size:.7rem;color:#0891b2;margin-top:.18rem;font-weight:600}
+.date-warn{display:block;font-size:.7rem;color:#dc2626;margin-top:.12rem}
+.date-warn-soft{display:block;font-size:.7rem;color:#d97706;margin-top:.12rem}
+
+/* Override controls (screen only) */
+.date-inp{padding:.28rem .45rem;border:1.5px solid #e2e8f0;border-radius:5px;font-size:.85rem;font-weight:600;color:#1e293b;background:#f8fafc;cursor:pointer;width:100%;max-width:180px;transition:border-color .15s,background .15s}
+.date-inp:hover{border-color:#94a3b8;background:white}
+.date-inp:focus{outline:none;border-color:#3b82f6;background:white;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.date-inp.weekend-flag{border-color:#f59e0b;background:#fffbeb;color:#92400e}
+.date-inp.weekend-flag:hover{background:#fef3c7}
+.date-inp.modified{border-color:#f59e0b;background:#fffbeb}
+.date-cell{display:flex;flex-direction:column;gap:.15rem}
+.day-label{font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;line-height:1}
+.btn-rv{background:none;border:none;cursor:pointer;color:#94a3b8;font-size:.8rem;padding:.1rem .2rem;border-radius:3px;line-height:1}
+.btn-rv:hover{color:#3b82f6}
+.days-spinner{width:68px;padding:.32rem .45rem;border:1.5px solid #e2e8f0;border-radius:5px;font-size:.97rem;font-weight:700;color:#2563eb;text-align:center;background:#f8fafc;-moz-appearance:textfield}
+.days-spinner::-webkit-inner-spin-button,.days-spinner::-webkit-outer-spin-button{opacity:1}
+.days-spinner:focus{outline:none;border-color:#3b82f6;background:white}
+.days-spinner-ov{border-color:#f59e0b;background:#fffbeb;color:#b45309}
+.ov-error{display:block;font-size:.71rem;color:#dc2626;margin-top:.15rem;font-weight:500}
+
+/* ── Settings panel ── */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none}
+.settings-overlay.open{display:block}
+.settings-panel{position:fixed;top:0;right:0;bottom:0;width:min(520px,100vw);background:white;z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
+.settings-panel.open{transform:translateX(0)}
+.sp-header{padding:.85rem 1.1rem;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;flex-shrink:0}
+.sp-header h2{font-size:.95rem;font-weight:700;color:#0f172a}
+.sp-body{flex:1;overflow-y:auto;padding:1.1rem}
+.sp-section{margin-bottom:1.75rem}
+.sp-section h3{font-size:.87rem;font-weight:700;color:#0f172a;margin-bottom:.65rem;padding-bottom:.35rem;border-bottom:1px solid #e2e8f0}
+.stabs{display:flex;gap:.15rem;margin-bottom:1rem;border-bottom:1px solid #e2e8f0;padding-bottom:0}
+.stab{padding:.42rem .9rem;background:none;border:none;cursor:pointer;font-size:.82rem;color:#64748b;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.stab.active{color:#3b82f6;border-bottom-color:#3b82f6;font-weight:600}
+.holiday-list{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.65rem;max-height:260px;overflow-y:auto}
+.hol-item{display:flex;align-items:center;justify-content:space-between;padding:.38rem .55rem;background:#f8fafc;border-radius:6px;font-size:.8rem}
+.hol-info{display:flex;flex-direction:column;gap:.05rem}
+.hol-name{font-weight:500;color:#1e293b}
+.hol-rule{font-size:.71rem;color:#64748b}
+.btn-del-hol{background:none;border:none;cursor:pointer;color:#94a3b8;font-size:.9rem;padding:.18rem;border-radius:3px;line-height:1}
+.btn-del-hol:hover{color:#ef4444}
+.btn-add-hol{padding:.38rem .7rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;font-size:.79rem;color:#3b82f6;font-weight:500}
+.btn-add-hol:hover{background:#e0f2fe}
+.off-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.off-table th{text-align:left;padding:.3rem .45rem;color:#64748b;font-weight:600;border-bottom:1px solid #e2e8f0;font-size:.72rem}
+.off-table td{padding:.28rem .45rem;border-bottom:1px solid #f1f5f9;color:#374151}
+.off-table tr:hover td{background:#f8fafc}
+.off-inp{width:4.2rem;padding:.22rem .38rem;border:1px solid #e2e8f0;border-radius:4px;font-size:.79rem;text-align:right}
+.off-inp:focus{outline:none;border-color:#3b82f6}
+.btn-reset-def{padding:.38rem .7rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;font-size:.79rem;color:#64748b;margin-top:.65rem}
+.btn-reset-def:hover{background:#fee2e2;color:#dc2626}
+.sp-footer{padding:.85rem 1.1rem;border-top:1px solid #e2e8f0;display:flex;gap:.5rem;background:#f8fafc;flex-shrink:0}
+.btn-exp{flex:1;padding:.45rem;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:500}
+.btn-exp:hover{background:#dbeafe}
+.btn-imp-lbl{flex:1;padding:.45rem;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:500;text-align:center;display:flex;align-items:center;justify-content:center}
+.btn-imp-lbl:hover{background:#dcfce7}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal{background:white;border-radius:12px;padding:1.4rem;width:min(380px,100%);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h3{font-size:.95rem;font-weight:700;margin-bottom:.9rem;color:#0f172a}
+.modal-field{margin-bottom:.65rem}
+.modal-field label{display:block;font-size:.8rem;font-weight:500;color:#475569;margin-bottom:.22rem}
+.modal-field input{width:100%;padding:.42rem .55rem;border:1.5px solid #e2e8f0;border-radius:6px;font-size:.88rem}
+.modal-field input:focus{outline:none;border-color:#3b82f6}
+.modal-acts{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.9rem}
+.btn-pri{padding:.45rem .9rem;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;font-size:.82rem;font-weight:500}
+.btn-pri:hover{background:#2563eb}
+.btn-sec{padding:.45rem .9rem;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;font-size:.82rem}
+.btn-sec:hover{background:#e2e8f0}
+
+/* Print header info (screen: hidden) */
+.print-header-info{display:none}
+
+/* ── Print ── */
+@media print{
+  /* ── Hide chrome in all print modes ── */
+  .app-header .header-actions,
+  .settings-overlay,
+  .settings-panel,
+  .modal-overlay,
+  .view-tabs,
+  .anchor-toggle,
+  .custom-hint,
+  .row-ignored,
+  .group-section-ignored,
+  .cal-tooltip,
+  #customClosingRow{display:none!important}
+
+  /* ── Base print styles ── */
+  body{background:white;font-size:10pt}
+  .app-header{position:static;background:white;color:#0f172a;border-bottom:2px solid #1e293b;padding:.5rem .75rem;flex-direction:column;align-items:flex-start;gap:.1rem}
+  .app-title{color:#0f172a;font-size:11pt}
+  .print-header-info{display:block!important;font-size:8pt;color:#64748b;margin-top:.1rem}
+  .main-content{max-width:100%;margin:.4rem 0;padding:0}
+
+  /* ── Show only the active pane ── */
+  .view-pane{display:none!important}
+  body[data-print-view="detail"] #paneDetail{display:block!important}
+  body[data-print-view="calendar"] #paneCalendar{display:block!important}
+  body[data-print-view="timeline"] #paneTimeline{display:block!important}
+  body[data-print-view="help"] #paneHelp{display:block!important}
+
+  /* ── Detail View print ── */
+  .banner-row{box-shadow:none;border:1px solid #e2e8f0;padding:.35rem .65rem;margin-bottom:.35rem;border-radius:6px}
+  .mode-tabs,.btn-preset-save-inline{display:none!important}
+  .group-section{margin-bottom:.75rem}
+  .group-header{padding:.3rem .6rem;font-size:7pt;border-radius:5px 5px 0 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .group-table{box-shadow:none}
+  .group-table th{padding:.25rem .5rem;font-size:7pt}
+  .group-table td{padding:.3rem .5rem;font-size:9pt}
+  .group-table tbody tr:hover td{background:inherit}
+  .group-table tbody tr.row-input td{background:white}
+  .col-ignore,.btn-skip{display:none!important}
+  .days-spinner{border:none;background:none;padding:0;font-size:9pt;width:auto}
+  .effective-date{font-size:7pt}
+  .day-label{font-size:7pt}
+
+  /* ── Calendar View print ── */
+  .cal-view{box-shadow:none;padding:.5rem}
+  .cal-months{gap:1rem}
+  .cal-month{min-width:0;max-width:none;flex:1}
+  .cal-month-title{font-size:10pt;margin-bottom:.4rem}
+  .cal-day{min-height:52px;padding:.2rem}
+  .cal-day-num{font-size:7pt}
+  .cal-badge,.cal-badge-ghost{width:18px;height:18px;font-size:.55rem}
+  .cal-legend{margin-top:.5rem;padding-top:.5rem}
+  .cal-legend-item{font-size:7pt}
+  .badge-offer,.badge-financing,.badge-dd,.badge-newsurvey,.badge-insurance,.badge-closing{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cal-day.weekend,.cal-day.holiday,.cal-day.has-milestone .cal-day-num{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  /* ── Help View print ── */
+  #paneHelp{max-height:none;overflow:visible}
+  .help-wrap{flex-direction:column}
+  .help-nav-sidebar{display:none}
+  .help-section{box-shadow:none;border:1px solid #e2e8f0;margin-bottom:.75rem;padding:1rem}
+  .help-section h2{font-size:11pt}
+  .help-section p,.help-section li{font-size:9pt}
+  .help-table{font-size:8pt}
+  .help-callout{font-size:8pt}
+  .help-steps li{font-size:9pt}
+}
+
+/* ── View Tabs ── */
+.view-tabs{display:flex;gap:.3rem;margin-bottom:.9rem}
+.view-tab{padding:.45rem 1.2rem;background:white;border:1.5px solid #e2e8f0;border-radius:8px 8px 0 0;cursor:pointer;font-size:.85rem;font-weight:600;color:#64748b;transition:all .15s;border-bottom:none}
+.view-tab.active{background:#0f172a;color:white;border-color:#0f172a}
+.view-pane{display:none}
+.view-pane.active{display:block}
+
+/* ── Calendar View ── */
+.cal-view{background:white;border-radius:0 10px 10px 10px;box-shadow:0 1px 4px rgba(0,0,0,.09);padding:1.75rem 2rem}
+.cal-months{display:flex;gap:2.5rem;flex-wrap:wrap;align-items:flex-start}
+.cal-month{flex:1;min-width:420px;max-width:560px}
+.cal-month-title{font-size:1.15rem;font-weight:700;color:#0f172a;text-align:center;margin-bottom:.85rem;letter-spacing:.01em}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;text-align:center;padding:.4rem 0;border-bottom:2px solid #e2e8f0;margin-bottom:.1rem}
+.cal-day{min-height:80px;padding:.4rem .35rem;border-radius:8px;position:relative;background:#f8fafc;transition:background .1s}
+.cal-day.other-month{background:transparent;opacity:.2}
+.cal-day.weekend{background:#f1f5f9}
+.cal-day.holiday{background:#fefce8}
+.cal-day.today{outline:2px solid #3b82f6;outline-offset:-2px}
+.cal-day-num{font-size:.82rem;color:#94a3b8;line-height:1;margin-bottom:.3rem}
+.cal-day.has-milestone .cal-day-num{color:#0f172a;font-weight:700;font-size:.88rem}
+.cal-badges{display:flex;flex-wrap:wrap;gap:3px;margin-top:.2rem}
+.cal-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:.68rem;font-weight:800;color:white;cursor:default;flex-shrink:0;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.cal-badge:hover{transform:scale(1.15);z-index:10}
+/* Ghost badge for Days Language Rollover */
+.cal-badge-ghost{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:.68rem;font-weight:800;color:white;cursor:default;flex-shrink:0;line-height:1;opacity:.38;position:relative}
+.cal-badge-ghost:hover{transform:scale(1.15);z-index:10;opacity:.6}
+/* Group colors */
+.badge-offer{background:#3b82f6}
+.badge-financing{background:#0d9488}
+.badge-dd{background:#ea580c}
+.badge-newsurvey{background:#7c3aed}
+.badge-insurance{background:#0891b2}
+.badge-closing{background:#dc2626}
+/* Tooltip */
+.cal-tooltip{position:fixed;background:#0f172a;color:white;padding:.55rem .85rem;border-radius:8px;font-size:.82rem;line-height:1.5;z-index:500;pointer-events:none;max-width:260px;box-shadow:0 4px 20px rgba(0,0,0,.4);display:none}
+/* Calendar legend */
+.cal-legend{display:flex;flex-wrap:wrap;gap:.65rem 1.2rem;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #f1f5f9}
+.cal-legend-ms{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:1rem;padding-top:.85rem;border-top:1px solid #f1f5f9}
+.cal-legend-ms-group{min-width:200px;flex:1}
+.cal-legend-ms-title{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem}
+.cal-legend-ms-row{display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem}
+.cal-legend-ms-name{font-size:.73rem;color:#1e293b;flex:1;font-weight:500}
+.cal-legend-ms-date{font-size:.68rem;color:#94a3b8;white-space:nowrap;flex-shrink:0}
+.cal-legend-item{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:#475569}
+.cal-legend-swatch{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.cal-legend-ghost{width:14px;height:14px;border-radius:50%;border:1.5px dashed #cbd5e1;background:white;flex-shrink:0}
+
+/* ── Help View ── */
+#paneHelp{overflow-y:auto;max-height:calc(100vh - 140px)}
+.help-wrap{display:flex;gap:1.75rem;align-items:flex-start;max-width:1800px}
+.help-nav-sidebar{width:190px;flex-shrink:0;position:sticky;top:0;background:white;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden}
+.help-nav-sidebar ul{list-style:none;padding:.35rem 0}
+.help-nav-sidebar li a{display:block;padding:.45rem 1rem;font-size:.82rem;color:#475569;text-decoration:none;border-left:3px solid transparent;transition:all .12s}
+.help-nav-sidebar li a:hover{background:#f8fafc;color:#0f172a;border-left-color:#94a3b8}
+.help-nav-sidebar li a.active{background:#eff6ff;color:#1d4ed8;border-left-color:#3b82f6;font-weight:600}
+.help-content-area{flex:1;min-width:0}
+.help-section{background:white;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:1.5rem 1.75rem;margin-bottom:1.25rem}
+.help-section h2{font-size:1.1rem;font-weight:700;color:#0f172a;margin-bottom:1rem;padding-bottom:.55rem;border-bottom:2px solid #e2e8f0}
+.help-section h3{font-size:.9rem;font-weight:700;color:#1e293b;margin:1.2rem 0 .45rem}
+.help-section h3:first-of-type{margin-top:.1rem}
+.help-section p{font-size:.86rem;color:#374151;line-height:1.7;margin-bottom:.65rem}
+.help-section p:last-child{margin-bottom:0}
+.help-section ul,.help-section ol{padding-left:1.2rem;margin-bottom:.65rem}
+.help-section li{font-size:.86rem;color:#374151;line-height:1.7;margin-bottom:.3rem}
+.help-section a{color:#2563eb;text-decoration:none}
+.help-section a:hover{text-decoration:underline}
+.help-section code{background:#f1f5f9;padding:.1rem .32rem;border-radius:3px;font-size:.8rem;font-family:ui-monospace,monospace;color:#0f172a}
+.help-callout{background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 6px 6px 0;padding:.65rem .9rem;margin:.65rem 0;font-size:.83rem;color:#1e40af;line-height:1.6}
+.help-callout.help-callout-amber{background:#fffbeb;border-left-color:#f59e0b;color:#92400e}
+.help-callout.help-callout-green{background:#f0fdf4;border-left-color:#22c55e;color:#14532d}
+.help-table{width:100%;border-collapse:collapse;font-size:.82rem;margin:.65rem 0}
+.help-table th{text-align:left;padding:.38rem .55rem;background:#f8fafc;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #e2e8f0}
+.help-table td{padding:.35rem .55rem;border-bottom:1px solid #f1f5f9;vertical-align:top;color:#374151}
+.help-table tr:last-child td{border-bottom:none}
+.help-table td:first-child{font-weight:500;color:#0f172a;white-space:nowrap}
+.help-steps{list-style:none;padding:0;counter-reset:step;margin-bottom:.65rem}
+.help-steps li{counter-increment:step;display:flex;gap:.75rem;margin-bottom:.75rem;align-items:flex-start}
+.help-steps li::before{content:counter(step);display:flex;align-items:center;justify-content:center;min-width:1.5rem;height:1.5rem;background:#3b82f6;color:white;border-radius:50%;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:.05rem}
+.help-steps li div{display:flex;flex-direction:column;gap:.15rem}
+.help-steps li strong{font-size:.86rem;color:#0f172a}
+.help-steps li span{font-size:.82rem;color:#64748b;line-height:1.55}
+
+/* ── Transaction Story Timeline — Swim Lane Layout ── */
+.cal-timeline{background:white;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.09);padding:1.5rem 2rem}
+.cal-timeline-title{font-size:.92rem;font-weight:700;color:#0f172a;margin-bottom:.2rem}
+.cal-timeline-sub{font-size:.75rem;color:#94a3b8;margin-bottom:1.25rem}
+.tl-canvas{position:relative;width:100%;overflow:hidden}
+/* Swim lane rows */
+.tl-row{display:flex;align-items:stretch;margin-bottom:2px;position:relative}
+.tl-row-label{flex-shrink:0;width:140px;display:flex;align-items:center;justify-content:flex-end;padding-right:12px}
+.tl-row-label-pill{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:white;padding:.22rem .55rem;border-radius:5px;line-height:1.3;text-align:center}
+.tl-row-track{flex:1;position:relative}
+/* Shared across lanes */
+.tl-grid-line{position:absolute;top:0;bottom:0;width:1px;pointer-events:none;z-index:0}
+.tl-urgency-zone{position:absolute;top:0;bottom:0;pointer-events:none;z-index:0}
+.tl-lane-axis{position:absolute;left:0;right:0;height:1.5px;background:#e2e8f0;top:50%;transform:translateY(-50%)}
+/* Markers */
+.tl-mk{position:absolute;transform:translateX(-50%);cursor:pointer;z-index:2}
+.tl-mk-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:white;box-shadow:0 1px 5px rgba(0,0,0,.22);flex-shrink:0;transition:transform .1s}
+.tl-mk:hover .tl-mk-dot{transform:scale(1.2)}
+.tl-mk-dot.ghost{opacity:.35}
+/* Axis bar + labels */
+.tl-axis-bar{position:relative;height:2px;background:#e2e8f0;margin-left:140px;margin-top:3px}
+.tl-axis-labels{position:relative;height:20px;margin-left:140px;margin-top:2px}
+.tl-axis-label{position:absolute;transform:translateX(-50%);white-space:nowrap;font-size:.62rem}
+/* Legend */
+.tl-legend{display:flex;flex-wrap:wrap;gap:.75rem 2rem;margin-top:1.1rem;padding-top:.85rem;border-top:2px solid #f1f5f9}
+.tl-legend-group{min-width:200px;flex:1}
+.tl-legend-group-title{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.45rem}
+.tl-legend-row{display:flex;align-items:baseline;gap:.45rem;margin-bottom:.3rem;line-height:1.3}
+.tl-legend-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:.58rem;font-weight:800;color:white;flex-shrink:0}
+.tl-legend-name{font-size:.75rem;color:#1e293b;flex:1;font-weight:500}
+.tl-legend-date{font-size:.7rem;color:#94a3b8;white-space:nowrap;flex-shrink:0}
+</style>
+  <!-- jsPDF + AutoTable for programmatic PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+<div class="settings-overlay" id="settingsOverlay" onclick="App.closeSettings()"></div>
+<div class="settings-panel" id="settingsPanel">
+  <div class="sp-header">
+    <h2>⚙ Settings</h2>
+    <button class="btn-icon" onclick="App.closeSettings()">✕ Close</button>
+  </div>
+  <div class="sp-body" id="spBody"></div>
+  <div class="sp-footer">
+    <button class="btn-exp" onclick="App.exportSettings()">⬇ Export Settings</button>
+    <label class="btn-imp-lbl">⬆ Import Settings
+      <input type="file" accept=".json" style="display:none" onchange="App.importSettings(this)">
+    </label>
+  </div>
+</div>
+
+<input type="file" id="transLoadInp" accept=".json" style="display:none" onchange="App.loadTransaction(this)">
+<header class="app-header">
+  <div class="app-title">🏠 RE Transaction Date Calculator</div>
+  <div class="print-header-info" id="printInfo"></div>
+  <div class="header-actions">
+    <div class="btn-more" id="moreMenuBtn" onclick="App.toggleMoreMenu()">
+      &#8943;
+      <div class="more-menu" id="moreMenu">
+        <button onclick="App.exportCalendar();App.closeMoreMenu()"><span class="menu-icon">📅</span> Calendar Export</button>
+        <button onclick="App.saveTransaction();App.closeMoreMenu()"><span class="menu-icon">💾</span> Save Transaction</button>
+        <button onclick="document.getElementById('transLoadInp').click();App.closeMoreMenu()"><span class="menu-icon">📂</span> Load Transaction</button>
+        <button onclick="App.openSettings();App.closeMoreMenu()"><span class="menu-icon">⚙</span> Settings</button>
+        <button onclick="App.printView();App.closeMoreMenu()"><span class="menu-icon">📄</span> Export PDF</button>
+        <button onclick="App.closeMoreMenu();App.switchView('help')"><span class="menu-icon">❓</span> Help</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="banner-row" id="propertyNameRow">
+    <label for="propertyNameInput">🏠 Property</label>
+    <input type="text" id="propertyNameInput" placeholder="Enter property name or address…"
+      style="flex:1;min-width:200px;padding:.35rem .55rem;border:1.5px solid #cbd5e1;border-radius:6px;font-size:.88rem;color:#0f172a"
+      oninput="App.setPropertyName(this.value)">
+  </div>
+  <div class="banner-row" id="offerDateRow">
+    <label for="offerDateInput">📅 Offer Date</label>
+    <input type="date" id="offerDateInput" onchange="App.setOfferDate(this.value)">
+    <div class="mode-tabs" id="modeTabs"></div>
+    <button class="btn-preset-save-inline" onclick="App.saveToMyPreset()" title="Save current day offsets to My Preset" style="margin-left:auto">📌 Save to My Preset</button>
+  </div>
+  <div class="banner-row" id="customClosingRow" style="display:none">
+    <label for="customClosingInput">🏁 Closing Date</label>
+    <input type="date" id="customClosingInput" onchange="App.setCustomClosing(this.value)">
+    <span class="mode-desc">(Required in Custom mode)</span>
+  </div>
+  <div class="custom-hint" id="customHint" style="display:none">
+    <strong>Custom Mode:</strong> A blank template — all offsets start at 0 (same as anchor date). Adjust spinners or dates as needed. Settings are session-only and not saved.
+  </div>
+  <div class="view-tabs">
+    <button class="view-tab active" id="tabDetail" onclick="App.switchView('detail')">Detail View</button>
+    <button class="view-tab" id="tabCalendar" onclick="App.switchView('calendar')">Calendar View</button>
+    <button class="view-tab" id="tabTimeline" onclick="App.switchView('timeline')">Timeline</button>
+    <button class="view-tab" id="tabHelp" onclick="App.switchView('help')">Help</button>
+  </div>
+  <div class="view-pane active" id="paneDetail">
+    <div id="groupsContainer"></div>
+  </div>
+  <div class="view-pane" id="paneCalendar">
+    <div class="cal-view" id="calContainer"></div>
+  </div>
+  <div class="view-pane" id="paneTimeline">
+    <div class="cal-view" id="timelineContainer"></div>
+  </div>
+  <div class="view-pane" id="paneHelp">
+    <div id="helpContainer"></div>
+  </div>
+
+<!-- ============================================================
+     HELP CONTENT TEMPLATE
+     Rendered into #helpContainer by _renderHelp() when the
+     Help tab is activated. Plain HTML — no JS escaping needed.
+     ============================================================ -->
+<template id="helpTpl">
+<div class="help-wrap">
+  <!-- Sidebar navigation -->
+  <nav class="help-nav-sidebar">
+    <ul>
+      <li><a href="#help-overview" data-sec="overview" onclick="App._helpScroll('overview');return false">Overview</a></li>
+      <li><a href="#help-pro-tip" data-sec="pro-tip" onclick="App._helpScroll('pro-tip');return false">&#9889; Pro Tip</a></li>
+      <li><a href="#help-modes" data-sec="modes" onclick="App._helpScroll('modes');return false">Calculation Modes</a></li>
+      <li><a href="#help-milestones" data-sec="milestones" onclick="App._helpScroll('milestones');return false">Milestone Reference</a></li>
+      <li><a href="#help-overrides" data-sec="overrides" onclick="App._helpScroll('overrides');return false">Date &amp; Day Overrides</a></li>
+      <li><a href="#help-toolbar" data-sec="toolbar" onclick="App._helpScroll('toolbar');return false">Toolbar &amp; Menu</a></li>
+      <li><a href="#help-ignore" data-sec="ignore" onclick="App._helpScroll('ignore');return false">Skip &amp; Loan Toggle</a></li>
+      <li><a href="#help-save-load" data-sec="save-load" onclick="App._helpScroll('save-load');return false">Save &amp; Load</a></li>
+      <li><a href="#help-calendar-export" data-sec="calendar-export" onclick="App._helpScroll('calendar-export');return false">Calendar Export</a></li>
+      <li><a href="#help-print" data-sec="print" onclick="App._helpScroll('print');return false">Print</a></li>
+      <li><a href="#help-presets" data-sec="presets" onclick="App._helpScroll('presets');return false">Preset Offsets</a></li>
+      <li><a href="#help-my-preset" data-sec="my-preset" onclick="App._helpScroll('my-preset');return false">My Preset</a></li>
+      <li><a href="#help-holidays" data-sec="holidays" onclick="App._helpScroll('holidays');return false">Holidays</a></li>
+      <li><a href="#help-settings-io" data-sec="settings-io" onclick="App._helpScroll('settings-io');return false">Import / Export Settings</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main content -->
+  <div class="help-content-area">
+
+    <div class="help-section" id="help-overview">
+      <h2>&#127968; RE Transaction Date Calculator</h2>
+      <p style="color:#64748b;margin-bottom:.75rem">Version 1.0 &nbsp;&middot;&nbsp; March 2026 &nbsp;&middot;&nbsp; CC0 1.0 Public Domain &nbsp;&middot;&nbsp; Written with the assistance of Claude (Anthropic)</p>
+      <p>This tool automatically computes all key contract milestone dates from your Offer Date and Acceptance Date. Dates are calculated using configurable day offsets anchored to key transaction events, organized into six milestone groups each cross-referenced to the relevant contract section number.</p>
+      <div class="help-callout"><strong>Business Day Rollover:</strong> When a calculated date falls on a weekend or holiday, an <strong>Effective Date</strong> appears in cyan below the Days spinner. This is the next business day &mdash; what the contract performs to under Days language. The date field is flagged amber with a &ldquo;Weekend or Holiday Performance Required&rdquo; warning so the broker can make an informed choice between Days language and exact-date language.</div>
+      <div class="help-callout help-callout-amber"><strong>Closing Date:</strong> The Closing Date is never automatically rolled forward. If it falls on a weekend or holiday the entire row turns red as a prompt to select a valid business day.</div>
+      <h3>Row color indicators</h3>
+      <ul>
+        <li><strong>Amber border</strong> &mdash; field has an active Days or date override</li>
+        <li><strong>Red border / red background</strong> &mdash; Closing date is on a non-business day, or a milestone falls before Acceptance</li>
+        <li><strong>Green border</strong> &mdash; user-input field (no offset calculation)</li>
+        <li><strong>Grey / strikethrough</strong> &mdash; milestone is skipped or suppressed</li>
+      </ul>
+    </div>
+
+    <div class="help-section" id="help-pro-tip">
+      <h2>&#9889; Get Started &mdash; Pro Tip</h2>
+      <p>The fastest workflow for a live transaction:</p>
+      <ol class="help-steps">
+        <li><div><strong>Add the Property Address</strong><span>Type it in the &#127968; Property field at the top. It appears on all printouts and exported calendar events.</span></div></li>
+        <li><div><strong>Pick a template and customize offer dates</strong><span>Select 30 Day Close, 45 Day Close, 60 Day Close, or My Preset. The Offer Date defaults to today. Each template automatically sets the Loan and New Survey toggles to sensible defaults (see Calculation Modes). Adjust any Days spinners to customize further.</span></div></li>
+        <li><div><strong>Save Transaction</strong><span>Open the &#8943; menu and click Save Transaction. This creates a <code>.json</code> file you can reload at any time from any machine.</span></div></li>
+        <li><div><strong>If offer is accepted: Load Transaction, update Acceptance Date, then Print or Export Calendar</strong><span>Load the saved file, enter the actual Acceptance Date &mdash; all milestones recalculate instantly. Print a clean summary or export an <code>.ics</code> file to share with your client.</span></div></li>
+      </ol>
+      <div class="help-callout help-callout-green"><strong>Tip:</strong> Use <strong>&#128204; Save to My Preset</strong> (next to the Offer Date) to lock in your preferred day offsets as a reusable template for all future transactions.</div>
+    </div>
+
+    <div class="help-section" id="help-modes">
+      <h2>&#128256; Calculation Modes</h2>
+      <p>Select a mode from the tabs at the top of the page. Switching modes clears all overrides, resets the DD Resolution anchor and Existing Doc trigger to defaults, and applies per-mode defaults for the Loan and New Survey toggles.</p>
+      <table class="help-table">
+        <thead><tr><th>Mode</th><th>Loan</th><th>New Survey</th><th>Closing</th></tr></thead>
+        <tbody>
+          <tr><td><strong>30 Day Close</strong></td><td>No (off)</td><td>No (off)</td><td>30 days from Acceptance</td></tr>
+          <tr><td><strong>45 Day Close</strong></td><td>Yes (on)</td><td>No (off)</td><td>45 days from Acceptance</td></tr>
+          <tr><td><strong>60 Day Close</strong></td><td>Yes (on)</td><td>Yes (on)</td><td>60 days from Acceptance</td></tr>
+          <tr><td><strong>My Preset</strong></td><td>Yes (on)</td><td>Yes (on)</td><td>Configurable</td></tr>
+          <tr><td><strong>Custom</strong></td><td>Yes (on)</td><td>Yes (on)</td><td>Spinner or banner input</td></tr>
+        </tbody>
+      </table>
+      <h3>30 Day Close</h3>
+      <p>Built-in 30-day preset. Loan dates and New Survey are off by default &mdash; appropriate for a quick cash or pre-approved transaction. Toggle either on if needed for a specific deal.</p>
+      <h3>45 Day Close</h3>
+      <p>Built-in 45-day preset. Loan dates are on; New Survey is off by default. Acceptance-anchored milestones are scaled between the 30 and 60-day tables. Close-anchored lead times are identical across all three built-in presets.</p>
+      <h3>60 Day Close</h3>
+      <p>Built-in 60-day preset. Both Loan dates and New Survey are on by default &mdash; appropriate for a full-finance transaction with a survey. Acceptance-anchored milestones are scaled for the longer timeline.</p>
+      <h3>My Preset</h3>
+      <p>Your fully customizable template stored in the browser. Configure it in Settings or capture your current spinner values using <strong>&#128204; Save to My Preset</strong>. Fields with offset 0 calculate to the same date as their anchor event. Loan and New Survey default to on; adjust after switching to the mode.</p>
+      <h3>Custom</h3>
+      <p>A blank template &mdash; all offsets start at 0 (same as anchor date). Spinners and date pickers work identically to the other presets. Settings are session-only and not saved to the browser. Use when you need a one-off configuration that doesn&rsquo;t fit your standard templates.</p>
+    </div>
+
+    <div class="help-section" id="help-milestones">
+      <h2>&#128209; Milestone Reference</h2>
+      <p>All milestones are numbered sequentially across all groups. Each label includes the contract section number for easy cross-reference.</p>
+      <table class="help-table">
+        <thead><tr><th>Group</th><th>Key Milestones</th><th>Anchor</th></tr></thead>
+        <tbody>
+          <tr><td>&#128203; Offer &amp; Acceptance</td><td>Offer Expiration, Acceptance, Earnest Money, IC Delivery &amp; Actual</td><td>Offer Date / Acceptance</td></tr>
+          <tr><td>&#127974; Financials</td><td>Proof of Funds, Pre-qual Letter, Loan Application, Appraisal Order, Final Loan Approval</td><td>Acceptance / Closing</td></tr>
+          <tr><td>&#128269; Due Diligence</td><td>Title Commitment, Existing Docs &amp; Survey, Seller Inspection, DD Objection &amp; Resolution</td><td>Acceptance / Title Receipt</td></tr>
+          <tr><td>&#128208; New Survey</td><td>Survey Order, Delivery, Objection, Resolution</td><td>Title Receipt / Closing</td></tr>
+          <tr><td>&#128737; Insurance</td><td>HO Insurance Contingency</td><td>Acceptance</td></tr>
+          <tr><td>&#127937; Closing</td><td>Repair Completion, Pre-Closing Walkthrough, Closing &amp; Funding</td><td>Closing</td></tr>
+        </tbody>
+      </table>
+      <h3>Special Fields</h3>
+      <ul>
+        <li><strong>Acceptance Date</strong> &mdash; defaults to Offer Expiration. Override to record the actual acceptance date; all milestones recalculate immediately.</li>
+        <li><strong>IC Actual Delivery</strong> &mdash; defaults to IC Due Date. When Existing Document Delivery is set to use the IC Actual anchor, updating this field recalculates that milestone.</li>
+        <li><strong>Title Commitment Receipt</strong> &mdash; user input only. Required before New Survey Order can calculate. Shows &ldquo;Awaiting Title Commitment&rdquo; until entered.</li>
+        <li><strong>Due Diligence Resolution</strong> &mdash; anchor is selectable via dropdown in the Anchor column. Defaults to DD Objection; can be anchored to any earlier milestone in the transaction. Saved with the transaction file.</li>
+        <li><strong>Existing Document Delivery</strong> &mdash; anchor toggle in the Anchor column switches between Acceptance and IC Actual Delivery.</li>
+      </ul>
+    </div>
+
+    <div class="help-section" id="help-overrides">
+      <h2>&#9999; Date &amp; Day Overrides</h2>
+      <h3>Days Spinner</h3>
+      <p>The Days column shows a numeric spinner pre-filled with the active preset offset. Changing it shifts that milestone for the current session only &mdash; the preset is not modified. Clearing it back to empty restores the preset value.</p>
+      <ul>
+        <li>Close-anchored fields (Repair Completion, Final Walkthrough, etc.) accept <strong>0 or negative values only</strong>.</li>
+        <li>All other calculated fields accept <strong>0 or positive values only</strong>.</li>
+        <li><strong>0 days</strong> = same date as the anchor event.</li>
+      </ul>
+      <h3>Date Picker</h3>
+      <p>Click the date field in the Calculated Date column to open the browser calendar picker or type a date directly. Setting a date computes the offset back to the anchor and updates the spinner &mdash; both controls stay in sync at all times.</p>
+      <h3>Effective Date</h3>
+      <p>When a Calculated Date falls on a weekend or holiday, an <strong>Effective Date</strong> appears in cyan below the spinner showing the next business day. The date field turns amber with a &ldquo;Weekend or Holiday Performance Required&rdquo; warning. This applies regardless of whether the date was set via the spinner or the picker.</p>
+      <h3>Resetting</h3>
+      <p>The <strong>&#8635;</strong> reset button appears whenever any override is active. Clicking it clears both the spinner override and the date picker value, returning the field to its preset-calculated result.</p>
+      <h3>Existing Document Delivery Anchor Toggle</h3>
+      <p>The Existing Document Delivery row has an anchor toggle in its Anchor column: <strong>Acceptance</strong> (default) or <strong>IC Actual</strong>. Switching it recalculates the date immediately and the selection is saved with the transaction.</p>
+    </div>
+
+    <div class="help-section" id="help-toolbar">
+      <h2>&#129520; Toolbar &amp; &#8943; Menu</h2>
+      <p>The header contains the mode tabs and a few always-visible primary controls. Less-frequent actions are in the <strong>&#8943;</strong> dropdown menu on the right.</p>
+      <table class="help-table">
+        <thead><tr><th>Control</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Mode tabs</td><td>Switch between 30 Day Close, 60 Day Close, My Preset, and Custom. Clears all overrides on switch.</td></tr>
+          <tr><td>&#128204; Save to My Preset</td><td>Captures all currently displayed Days spinner values and saves them as your My Preset template. Requires confirmation. Clears spinner overrides and switches to My Preset mode.</td></tr>
+          <tr><td>&#8943; Menu</td><td>Opens a dropdown with: Calendar Export, Save Transaction, Load Transaction, Settings, Print, Help.</td></tr>
+          <tr><td>Loan: Yes / No</td><td>In the Financials group header. Toggles loan-related milestones on/off for the current session (not saved with transaction).</td></tr>
+          <tr><td>Survey: Yes / No</td><td>In the New Survey group header. Ignores/includes all four New Survey milestones at once. Saved with the transaction.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="help-section" id="help-ignore">
+      <h2>&#128683; Skip &amp; Loan Toggle</h2>
+      <h3>Skip Buttons</h3>
+      <p>Certain milestones have a <strong>Skip</strong> button in the far-right column. Clicking it (turns red) marks that milestone as not applicable &mdash; it is greyed out with strikethrough and excluded from printouts and calendar export. Skip state is saved with the transaction.</p>
+      <p>Fields with individual Skip buttons: <strong>Proof of Funds</strong>, <strong>Appraisal Order</strong>, <strong>Existing Survey Delivery</strong>, <strong>Seller Inspection Order</strong>, <strong>Seller Inspection Delivery</strong>.</p>
+      <h3>Loan: Yes / No</h3>
+      <p>In the Financials group header. When set to <strong>No</strong>, the Pre-qualification Letter, Loan Application, and Final Loan Approval rows are suppressed from the UI, print, and calendar export. The default state depends on the active template: <strong>No</strong> for 30 Day Close; <strong>Yes</strong> for 45 Day, 60 Day, My Preset, and Custom. Switching templates resets this toggle to its default. Within a session you can override it freely.</p>
+      <h3>Survey: Yes / No</h3>
+      <p>In the New Survey group header. When set to <strong>No</strong>, all four New Survey milestones are excluded from the UI, print, and calendar export. The default state depends on the active template: <strong>No</strong> for 30 Day Close and 45 Day Close; <strong>Yes</strong> for 60 Day, My Preset, and Custom. Switching templates resets this toggle. Saved with the transaction file.</p>
+    </div>
+
+    <div class="help-section" id="help-save-load">
+      <h2>&#128190; Save &amp; Load Transactions</h2>
+      <p>Use <strong>Save Transaction</strong> (&#8943; menu) to save the current transaction as a <code>.json</code> file named after the property. Use <strong>Load Transaction</strong> to restore it at any time.</p>
+      <h3>What is saved</h3>
+      <ul>
+        <li>Property name, Offer Date, calculation mode, Custom Closing Date</li>
+        <li>All date picker overrides (individual milestones)</li>
+        <li>Skip states for individual milestones and the New Survey section</li>
+        <li>Loan toggle state, Existing Doc Delivery anchor trigger, DD Resolution anchor</li>
+      </ul>
+      <h3>What is not saved</h3>
+      <ul>
+        <li>Days spinner overrides (session-only &mdash; use &#128204; Save to My Preset to preserve them permanently)</li>
+        <li>Preset offsets and holiday list (use Export Settings in the Settings panel)</li>
+      </ul>
+      <div class="help-callout">Transaction files (<code>-dates.json</code>) and Settings files (<code>re-date-calc-settings.json</code>) are different formats. Do not try to load one where the other is expected.</div>
+    </div>
+
+    <div class="help-section" id="help-calendar-export">
+      <h2>&#128197; Calendar Export</h2>
+      <p>The Calendar Export option (&#8943; menu) downloads an <code>.ics</code> file of all visible, non-skipped milestones as all-day calendar events. Loan milestones are excluded when Loan is set to No.</p>
+      <p>When a property name is set, event titles read: <em>123 Main St &mdash; Earnest Money Delivery (6.)</em>. When a date was rolled forward from a weekend or holiday, the calendar event description notes the original Calculated Date.</p>
+      <h3>Importing into your calendar app</h3>
+      <ul>
+        <li><strong>Google Calendar:</strong> <a href="https://support.google.com/calendar/answer/37118?hl=en&amp;co=GENIE.Platform%3DDesktop" target="_blank" rel="noopener">Import instructions &#8599;</a></li>
+        <li><strong>Microsoft Outlook:</strong> <a href="https://support.microsoft.com/en-us/office/import-calendars-into-outlook-8e8364e1-400e-4c0f-a573-fe76b5a2d379" target="_blank" rel="noopener">Import instructions &#8599;</a></li>
+        <li><strong>Apple Calendar (iOS):</strong> <a href="https://discussions.apple.com/thread/255910569?sortBy=rank" target="_blank" rel="noopener">Import instructions &#8599;</a></li>
+      </ul>
+      <div class="help-callout help-callout-amber"><strong>One-time import:</strong> The <code>.ics</code> file is a static snapshot. If you change dates and re-export, delete the previous events in your calendar app first to avoid duplicates.</div>
+    </div>
+
+    <div class="help-section" id="help-print">
+      <h2>&#128424; Print</h2>
+      <p>Select Print from the &#8943; menu. The print layout automatically hides all toolbar buttons, override controls, Skip buttons, and skipped milestone rows. A header showing the property name, calculation mode, offer date, and print timestamp is added.</p>
+      <p>For best results: set browser print margins to <strong>Minimum</strong> and enable <strong>Background graphics</strong> if you want group headers to print with dark backgrounds.</p>
+    </div>
+
+    <div class="help-section" id="help-presets">
+      <h2>&#9881; Preset Offsets</h2>
+      <p>Open <strong>Settings &rarr; Presets</strong> to customize default day counts for any template. Select the <strong>30 Day</strong>, <strong>45 Day</strong>, <strong>60 Day</strong>, or <strong>My Preset</strong> tab and edit the Days field for any milestone. Positive offsets count forward from the anchor; negative offsets count backward from closing. Changes save immediately to your browser and persist across sessions.</p>
+      <p>Click <strong>&#8635; Reset to Defaults</strong> at the bottom of the preset table to restore the original built-in values for that template.</p>
+      <div class="help-callout help-callout-amber">For <strong>Due Diligence Resolution</strong>, the Settings panel shows <em>DD Objection (default &mdash; anchor selectable in Detail View)</em>. The actual per-transaction anchor is set via the dropdown in the Anchor column of the Detail View and is saved with the transaction file.</div>
+    </div>
+
+    <div class="help-section" id="help-my-preset">
+      <h2>&#128204; My Preset</h2>
+      <p>My Preset is your personal reusable template stored in the browser. The fastest way to configure it:</p>
+      <ol class="help-steps">
+        <li><div><strong>Start from an existing preset</strong><span>Load 30 Day, 45 Day, or 60 Day as a starting point &mdash; whichever is closest to your standard timeline.</span></div></li>
+        <li><div><strong>Adjust the spinners</strong><span>Dial in your preferred day offsets for each milestone to match your typical transaction timeline.</span></div></li>
+        <li><div><strong>Click &#128204; Save to My Preset</strong><span>Confirm the dialog. Every spinner&rsquo;s currently displayed value is captured and saved. Spinner overrides are cleared and the view switches to My Preset mode so you can see the result immediately.</span></div></li>
+      </ol>
+      <p>You can also edit offset values directly in <strong>Settings &rarr; Presets &rarr; My Preset</strong>.</p>
+    </div>
+
+    <div class="help-section" id="help-holidays">
+      <h2>&#128198; Holidays</h2>
+      <p>Open <strong>Settings &rarr; Holidays</strong> to view and manage the holiday list used for Effective Date rollover. The default list includes 11 US federal holidays. Fixed-date holidays that fall on Saturday observe the preceding Friday; those on Sunday observe the following Monday. If January 1 of the following year falls on Saturday, December 31 is treated as the New Year&rsquo;s Day observance.</p>
+      <h3>Adding a custom holiday</h3>
+      <p>Click <strong>+ Add Holiday</strong>, enter a name and select a date. The holiday repeats annually on that month and day.</p>
+      <h3>Removing a holiday</h3>
+      <p>Click <strong>&#10005;</strong> next to any holiday. Built-in federal holidays can be removed if they are not observed in your area (e.g., Columbus Day).</p>
+    </div>
+
+    <div class="help-section" id="help-settings-io">
+      <h2>&#128228; Import / Export Settings</h2>
+      <p>Your preset offsets and holiday list can be exported as a <code>.json</code> file and imported on any copy of the calculator. This is useful for sharing a standard office configuration or backing up your customizations.</p>
+      <p>In the Settings panel footer: click <strong>&#8595; Export Settings</strong> to download <code>re-date-calc-settings.json</code>. Click <strong>&#8593; Import Settings</strong> to restore from a previously exported file. A confirmation dialog appears before overwriting your current presets and holidays.</p>
+      <div class="help-callout help-callout-amber"><strong>Browser data warning:</strong> Settings are stored in <code>localStorage</code>. Clearing your browser&rsquo;s site data resets all customizations to factory defaults. Export your settings regularly as a backup, especially after spending time configuring My Preset or custom holidays.</div>
+    </div>
+
+  </div><!-- end help-content-area -->
+</div><!-- end help-wrap -->
+</template>
+</main>
+<div class="cal-tooltip" id="calTooltip"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   FIELD DEFINITIONS
+   Each entry defines a transaction milestone. Key fields:
+     k: unique key, lbl: display label, offKey: preset offset key,
+     anch: anchor type for calculation, loan: suppressed when loan toggle off,
+     inputOnly: user-entered only (no offset calc), isDefault: defaults to another field
+   ============================================================ */
+var FD = [
+  { n:1,  k:'offerDate',              lbl:'Offer',                                            inputOnly:true },
+  { n:2,  k:'offerExpiration',        lbl:'Offer Expiration (1. I.)',                          offKey:'offerExpiration',        anch:'offerDate',    anchLbl:'Offer' },
+  { n:3,  k:'acceptanceDate',         lbl:'Acceptance',                                       isDefault:true, defFrom:'offerExpiration', defLbl:'Offer Expiration' },
+  { n:4,  k:'earnestMoneyDue',        lbl:'Earnest Money Delivery (6.)',                       offKey:'earnestMoneyDue',        anch:'acceptance',   anchLbl:'Acceptance' },
+  { n:5,  k:'icDue',                  lbl:'Independent Consideration Delivery (7. A. ii.)',   offKey:'icDue',                  anch:'acceptance',   anchLbl:'Acceptance' },
+  { n:6,  k:'icActual',               lbl:'Independent Consideration Actual Delivery',        isDefault:true, defFrom:'icDue',           defLbl:'IC Delivery' },
+  { n:7,  k:'loanApplication',        lbl:'Loan Application (8. C. ii.)',                     offKey:'loanApplication',        anch:'acceptance',   anchLbl:'Acceptance', loan:true },
+  { n:8,  k:'appraisalOrder',         lbl:'Appraisal Order (10. A. i. or ii.)',               offKey:'appraisalOrder',         anch:'acceptance',   anchLbl:'Acceptance' },
+  { n:9,  k:'titleCommitment',        lbl:'Title Commitment Receipt',                         inputOnly:true },
+  { n:10, k:'existingDocDelivery',    lbl:'Existing Document Delivery (32.)',                  offKey:'existingDocDelivery',    anch:'icTrigger',    anchLbl:'Acceptance', toggle:true },
+  { n:11, k:'existingSurveyDelivery', lbl:'Existing Survey Delivery (40. A. i.)',              offKey:'existingSurveyDelivery', anch:'acceptance',   anchLbl:'Acceptance' },
+  { n:13, k:'newSurveyOrder',         lbl:'New Survey Order (40. B. i.)',                     offKey:'newSurveyOrder',         anch:'titleReceipt', anchLbl:'Title Commitment Receipt', needsTitle:true },
+  { n:14, k:'dueDiligenceObjection',  lbl:'Due Diligence Objection (33. A.)',                 offKey:'dueDiligenceObjection',  anch:'acceptance',   anchLbl:'Acceptance' },
+  { n:15, k:'dueDiligenceResolution', lbl:'Due Diligence Resolution (33. D.)',                offKey:'dueDiligenceResolution', anch:'ddObjection',  anchLbl:'DD Objection' },
+  { n:26, k:'sellerInspectionOrder',  lbl:'Seller Inspection Order (5138 3.)',                offKey:'sellerInspectionOrder',  anch:'acceptance',   anchLbl:'Acceptance' },
+  { n:27, k:'sellerInspectionDelivery', lbl:'Seller Inspection Delivery (5138 4.)',           offKey:'sellerInspectionDelivery', anch:'acceptance', anchLbl:'Acceptance' },
+  { n:16, k:'loanContingency',        lbl:'Final Loan Approval (8. C. iv.)',                  offKey:'loanContingency',        anch:'close',        anchLbl:'Closing',    loan:true },
+  { n:25, k:'prequalLetter',          lbl:'Pre-qualification Letter (8. C. i.)',              offKey:'prequalLetter',          anch:'acceptance',   anchLbl:'Acceptance', loan:true },
+  { n:17, k:'newSurveyDelivery',      lbl:'New Survey Delivery (40. B. ii.)',                 offKey:'newSurveyDelivery',      anch:'close',        anchLbl:'Closing' },
+  { n:18, k:'newSurveyObjection',     lbl:'New Survey Objection (40. B. iii.)',               offKey:'newSurveyObjection',     anch:'close',        anchLbl:'Closing' },
+  { n:19, k:'newSurveyResolution',    lbl:'New Survey Resolution (40. B. iv.)',               offKey:'newSurveyResolution',    anch:'close',        anchLbl:'Closing' },
+  { n:20, k:'hoInsuranceContingency', lbl:'Homeowners Insurance Contingency (18. B.)',        offKey:'hoInsuranceContingency', anch:'acceptance',   anchLbl:'Acceptance' },
+  { n:21, k:'repairCompletion',       lbl:'Repair Completion (33. D. ii.)',                   offKey:'repairCompletion',       anch:'close',        anchLbl:'Closing' },
+  { n:22, k:'finalWalkthrough',       lbl:'Pre-Closing Walkthrough (43.)',                    offKey:'finalWalkthrough',       anch:'close',        anchLbl:'Closing' },
+  { n:23, k:'closingDate',            lbl:'Closing (1. G.) and Funding (44. B)',              offKey:'closingDate',            anch:'acceptance',   anchLbl:'Acceptance', isClose:true },
+  { n:24, k:'proofOfFunds',           lbl:'Proof of Funds (8. A.)',                           offKey:'proofOfFunds',           anch:'acceptance',   anchLbl:'Acceptance' }
+];
+
+// Quick lookup by key
+var FD_MAP = {};
+FD.forEach(function(f){ FD_MAP[f.k] = f; });
+
+/* ============================================================
+   GROUPS — defines display sections and the ordered keys within each.
+   Order here controls both table rendering and calendar export order.
+   ============================================================ */
+var GROUPS = [
+  { id:'offer',    icon:'📋', lbl:'Offer and Acceptance',
+    keys:['offerExpiration','acceptanceDate','earnestMoneyDue','icDue','icActual'] },
+  { id:'financing',icon:'🏦', lbl:'Financials',
+    keys:['proofOfFunds','prequalLetter','loanApplication','appraisalOrder','loanContingency'] },
+  { id:'dd',       icon:'🔍', lbl:'Due Diligence',
+    keys:['titleCommitment','existingDocDelivery','existingSurveyDelivery',
+          'sellerInspectionOrder','sellerInspectionDelivery',
+          'dueDiligenceObjection','dueDiligenceResolution'] },
+  { id:'newsurvey',icon:'📐', lbl:'New Survey',
+    keys:['newSurveyOrder','newSurveyDelivery','newSurveyObjection','newSurveyResolution'] },
+  { id:'insurance',icon:'🛡', lbl:'Insurance',
+    keys:['hoInsuranceContingency'] },
+  { id:'closing',  icon:'🏁', lbl:'Closing',
+    keys:['repairCompletion','finalWalkthrough','closingDate'] }
+];
+
+/* ============================================================
+   DEFAULT OFFSETS
+   Preset day offsets for 30-day, 60-day, and user-defined templates.
+   Positive = days after anchor. Negative = days before closing.
+   Zero in DEF_USER means "not configured" (field shows — in spinner).
+   ============================================================ */
+var DEF40 = {
+  offerExpiration:2,  earnestMoneyDue:3,  icDue:3,  loanApplication:1,
+  appraisalOrder:3,   existingDocDelivery:5,  existingSurveyDelivery:5,
+  sellerInspectionOrder:3, sellerInspectionDelivery:17,
+  dueDiligenceObjection:20, dueDiligenceResolution:5,
+  loanContingency:0,  newSurveyOrder:3,   closingDate:30, proofOfFunds:1, prequalLetter:7,
+  newSurveyDelivery:-15, newSurveyObjection:-10, newSurveyResolution:-5,
+  hoInsuranceContingency:30, repairCompletion:-3, finalWalkthrough:-1
+};
+var DEF45 = {
+  offerExpiration:2,  earnestMoneyDue:3,  icDue:3,  loanApplication:1,
+  appraisalOrder:3,   existingDocDelivery:5,  existingSurveyDelivery:5,
+  sellerInspectionOrder:3, sellerInspectionDelivery:21,
+  dueDiligenceObjection:25, dueDiligenceResolution:5,
+  loanContingency:0,  newSurveyOrder:3,   closingDate:45, proofOfFunds:1, prequalLetter:7,
+  newSurveyDelivery:-15, newSurveyObjection:-10, newSurveyResolution:-5,
+  hoInsuranceContingency:45, repairCompletion:-3, finalWalkthrough:-1
+};
+var DEF60 = {
+  offerExpiration:2,  earnestMoneyDue:3,  icDue:3,  loanApplication:1,
+  appraisalOrder:3,   existingDocDelivery:5,  existingSurveyDelivery:5,
+  sellerInspectionOrder:3, sellerInspectionDelivery:28,
+  dueDiligenceObjection:32, dueDiligenceResolution:5,
+  loanContingency:0,  newSurveyOrder:3,   closingDate:60, proofOfFunds:1, prequalLetter:7,
+  newSurveyDelivery:-15, newSurveyObjection:-10, newSurveyResolution:-5,
+  hoInsuranceContingency:60, repairCompletion:-3, finalWalkthrough:-1
+};
+var DEF_USER = {
+  offerExpiration:0,  earnestMoneyDue:0,  icDue:0,  loanApplication:0,
+  appraisalOrder:0,   existingDocDelivery:0, existingSurveyDelivery:0,
+  sellerInspectionOrder:0, sellerInspectionDelivery:0,
+  dueDiligenceObjection:0, dueDiligenceResolution:0,
+  loanContingency:0,  newSurveyOrder:0,   closingDate:0, proofOfFunds:0, prequalLetter:0,
+  newSurveyDelivery:0, newSurveyObjection:0, newSurveyResolution:0,
+  hoInsuranceContingency:0, repairCompletion:0, finalWalkthrough:0
+};
+
+/* Session-only blank preset for Custom mode — all zeros, never persisted. */
+var DEF_CUSTOM = {
+  offerExpiration:0,  earnestMoneyDue:0,  icDue:0,  loanApplication:0,
+  appraisalOrder:0,   existingDocDelivery:0, existingSurveyDelivery:0,
+  sellerInspectionOrder:0, sellerInspectionDelivery:0,
+  dueDiligenceObjection:0, dueDiligenceResolution:0,
+  loanContingency:0,  newSurveyOrder:0,   closingDate:0, proofOfFunds:0, prequalLetter:0,
+  newSurveyDelivery:0, newSurveyObjection:0, newSurveyResolution:0,
+  hoInsuranceContingency:0, repairCompletion:0, finalWalkthrough:0
+};
+
+/* ============================================================
+   FEDERAL HOLIDAYS
+   ============================================================ */
+var FED_HOLS = [
+  {id:'newyear',      name:"New Year's Day",            type:'fixed', month:1,  day:1},
+  {id:'mlk',          name:"MLK Jr. Day",               type:'nth',   month:1,  nth:3, wd:1},
+  {id:'presidents',   name:"Presidents' Day",            type:'nth',   month:2,  nth:3, wd:1},
+  {id:'memorial',     name:"Memorial Day",               type:'last',  month:5,  wd:1},
+  {id:'juneteenth',   name:"Juneteenth",                 type:'fixed', month:6,  day:19},
+  {id:'independence', name:"Independence Day",           type:'fixed', month:7,  day:4},
+  {id:'labor',        name:"Labor Day",                  type:'nth',   month:9,  nth:1, wd:1},
+  {id:'columbus',     name:"Columbus Day",               type:'nth',   month:10, nth:2, wd:1},
+  {id:'veterans',     name:"Veterans Day",               type:'fixed', month:11, day:11},
+  {id:'thanksgiving', name:"Thanksgiving",               type:'nth',   month:11, nth:4, wd:4},
+  {id:'christmas',    name:"Christmas Day",              type:'fixed', month:12, day:25}
+];
+
+/* ============================================================
+   STATE — single source of truth for all application state.
+   Session-only fields (not saved to transaction JSON):
+     includeLoan, settings
+   Persisted to transaction JSON:
+     propertyName, offerDate, mode, customClosing, overrides,
+     ignored, ignoredSections, edTrigger, ddrAnchor
+   ============================================================ */
+var S = {
+  mode:'40day',
+  propertyName:'',
+  offerDate:null,
+  customClosing:null,
+  overrides:{},
+  dayOverrides:{},    // { fieldKey: number } — session-only days-offset overrides
+  ignored:{icActual:true}, // { fieldKey: true } — icActual skipped by default
+  ignoredSections:{}, // { sectionId: true } — whole-section ignores
+  includeLoan:true,   // global loan-dates toggle (session-only, not persisted)
+  edTrigger:'acceptance',
+  ddrAnchor:'ddObjection',
+  settings:null
+};
+
+/* ============================================================
+   LOCAL STORAGE
+   Settings (presets + holidays) are persisted to localStorage under
+   key "reDC_v3". Transaction data is saved/loaded as JSON files.
+   ============================================================ */
+/** Loads settings from localStorage. Merges saved values with defaults
+ * so new preset keys added in updates are always present. */
+function loadSettings(){
+  try{
+    var raw=localStorage.getItem('reDC_v3');
+    if(raw){
+      var s=JSON.parse(raw);
+      return {
+        holidays: s.holidays || clone(FED_HOLS),
+        presets:{
+          '40day': merge(clone(DEF40), s.presets&&s.presets['40day']||{}),
+          '45day': merge(clone(DEF45), s.presets&&s.presets['45day']||{}),
+          '60day': merge(clone(DEF60), s.presets&&s.presets['60day']||{}),
+          'user':  merge(clone(DEF_USER), s.presets&&s.presets['user']||{})
+        }
+      };
+    }
+  }catch(e){}
+  return {
+    holidays:clone(FED_HOLS),
+    presets:{'40day':clone(DEF40),'45day':clone(DEF45),'60day':clone(DEF60),'user':clone(DEF_USER)}
+  };
+}
+/** Persists current settings (presets + holidays) to localStorage. */
+function saveSettings(){ try{localStorage.setItem('reDC_v3',JSON.stringify(S.settings));}catch(e){} }
+
+/* ============================================================
+   DATE UTILITIES
+   Core date helpers. All dates are plain JS Date objects at midnight
+   local time. toYMD/parseYMD use YYYY-MM-DD string format throughout.
+   ============================================================ */
+/** Parses a YYYY-MM-DD string to a local-midnight Date. Returns null for falsy input. */
+function parseYMD(s){ if(!s)return null; var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+/** Formats a Date as YYYY-MM-DD string. Returns empty string for null. */
+function toYMD(d){ return d?d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()):''; }
+function pad(n){ return n<10?'0'+n:''+n; }
+/** Formats a Date as "Mon, Jan 1, 2025" for display. */
+function fmtDisplay(d){
+  if(!d)return '';
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return days[d.getDay()]+', '+mons[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+}
+/** Formats a Date as "Mon Jan 1" short form (used in effective date labels). */
+function fmtShort(d){
+  if(!d)return '';
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return days[d.getDay()]+' '+mons[d.getMonth()]+' '+d.getDate();
+}
+/** Returns a new Date that is n calendar days after d. */
+function addDays(d,n){ var r=new Date(d.getFullYear(),d.getMonth(),d.getDate()); r.setDate(r.getDate()+n); return r; }
+/** Returns the integer number of calendar days from date a to date b. */
+function diffDays(a,b){ return Math.round((b-a)/86400000); }
+
+/* ── Holiday resolution ── */
+function fixedObserved(y,m,day){
+  var d=new Date(y,m-1,day), wd=d.getDay();
+  if(wd===6) return new Date(y,m-1,day-1);
+  if(wd===0) return new Date(y,m-1,day+1);
+  return d;
+}
+function nthWeekday(y,m,nth,wd){
+  var d=new Date(y,m-1,1),cnt=0;
+  while(d.getMonth()===m-1){
+    if(d.getDay()===wd){ cnt++; if(cnt===nth)return new Date(d); }
+    d.setDate(d.getDate()+1);
+  }
+  return null;
+}
+function lastWeekday(y,m,wd){
+  var d=new Date(y,m,0);
+  while(d.getDay()!==wd) d.setDate(d.getDate()-1);
+  return new Date(d);
+}
+function resolveHol(h,y){
+  if(h.type==='fixed')  return fixedObserved(y,h.month,h.day);
+  if(h.type==='nth')    return nthWeekday(y,h.month,h.nth,h.wd);
+  if(h.type==='last')   return lastWeekday(y,h.month,h.wd);
+  if(h.type==='custom') return parseYMD(h.date);
+  return null;
+}
+var _hcache={};
+function clearHolCache(){ _hcache={}; }
+function holDatesForYear(y){
+  if(_hcache[y]) return _hcache[y];
+  var set={};
+  S.settings.holidays.forEach(function(h){
+    var d=resolveHol(h,y);
+    if(d) set[toYMD(d)]=h.name;
+  });
+  // If Jan 1 of next year is Saturday, Dec 31 of this year is observed New Year's
+  var jan1next=new Date(y+1,0,1);
+  if(jan1next.getDay()===6){
+    var hasNY=S.settings.holidays.some(function(h){ return h.type==='fixed'&&h.month===1&&h.day===1; });
+    if(hasNY) set[y+'-12-31']="New Year's Day (observed)";
+  }
+  _hcache[y]=set;
+  return set;
+}
+function getHolName(d){
+  var ymd=toYMD(d);
+  return holDatesForYear(d.getFullYear())[ymd]||null;
+}
+function isHoliday(d){ return !!getHolName(d); }
+function isWeekend(d){ var w=d.getDay(); return w===0||w===6; }
+function isWeekendOrHol(d){ return isWeekend(d)||isHoliday(d); }
+/** Advances d forward until it lands on a business day (not weekend or holiday).
+ * Stops after 40 iterations to prevent infinite loops on bad holiday data. */
+function nextBizDay(d){
+  var r=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  var lim=0;
+  while(isWeekendOrHol(r)){ r=addDays(r,1); if(++lim>40)break; }
+  return r;
+}
+
+
+/* ============================================================
+   CALCULATION ENGINE
+   calc() is the pure function at the heart of the app. It takes
+   no arguments, reads S (state), and returns:
+     { dates, warns, bumped, effective }
+   All rendering derives from this output. Call render() to
+   recalculate and repaint after any state change.
+
+   Key design: dates[] always holds raw calculated values (no rollover).
+   effective[] holds rolled-forward dates for display only.
+   Downstream calculations always use dates[], never effective[].
+   ============================================================ */
+/** Returns the active preset offset object based on current mode,
+ * or null for custom mode (no preset offsets apply). */
+function getOffsets(){ return S.mode==='40day'?S.settings.presets['40day']:S.mode==='45day'?S.settings.presets['45day']:S.mode==='60day'?S.settings.presets['60day']:S.mode==='user'?S.settings.presets['user']:S.mode==='custom'?DEF_CUSTOM:null; }
+
+/** Core calculation engine. Reads state S, returns {dates, warns, effective}.
+ * dates: raw calculated dates (no rollover applied).
+ * warns: validation warning strings keyed by field.
+ * effective: rolled-forward dates keyed by field (display only, not used in calculations). */
+function calc(){
+  var dates={}, warns={}, bumped={};
+  var offs=getOffsets();
+  var isCustom=S.mode==='custom';
+
+  function ov(k){ return S.overrides[k]!==undefined?parseYMD(S.overrides[k]):undefined; }
+  function resolved(k,computed){ var o=ov(k); return o!==undefined?o:computed; }
+  function shouldCalc(ok){ if(!offs)return false; if(S.dayOverrides[ok]!==undefined) return true; return offs[ok]!==undefined; }
+
+  // Effective offset: dayOverride wins over preset, unless date picker is also set (handled in resolved())
+  function effectiveOff(k){ return S.dayOverrides[k]!==undefined?S.dayOverrides[k]:(offs?offs[k]:0); }
+
+  // Apply offset — returns raw calculated date (no rollover).
+  // Rollover is computed separately in the effective{} map.
+  // noRoll parameter kept for API compatibility but is now a no-op.
+  function applyOff(key, anchor, offset, noRoll){
+    if(!anchor) return null;
+    return addDays(anchor, offset);
+  }
+
+  // 1. offerDate
+  dates.offerDate=parseYMD(S.offerDate);
+  if(!dates.offerDate) return {dates:dates,warns:warns,bumped:bumped};
+
+  // 2. offerExpiration
+  if(shouldCalc('offerExpiration')){
+    dates.offerExpiration=resolved('offerExpiration', applyOff('offerExpiration', dates.offerDate, effectiveOff('offerExpiration'), true));
+  } else {
+    dates.offerExpiration=resolved('offerExpiration',null);
+  }
+
+  // 3. acceptanceDate → defaults to offerExpiration
+  dates.acceptanceDate=ov('acceptanceDate')!==undefined?ov('acceptanceDate'):dates.offerExpiration;
+  if(dates.acceptanceDate&&dates.offerDate&&dates.acceptanceDate<dates.offerDate){
+    warns.acceptanceDate='Acceptance date is before offer date';
+  }
+  var acc=dates.acceptanceDate;
+
+  // 4. Acceptance-anchored fields (batch)
+  ['earnestMoneyDue','icDue','loanApplication','appraisalOrder','existingSurveyDelivery','sellerInspectionOrder','sellerInspectionDelivery','hoInsuranceContingency','proofOfFunds','prequalLetter'].forEach(function(k){
+    if(shouldCalc(k)){
+      dates[k]=resolved(k, acc?applyOff(k, acc, effectiveOff(k)):null);
+    } else {
+      dates[k]=resolved(k,null);
+    }
+  });
+
+  // 5. icActual → defaults to icDue
+  dates.icActual=ov('icActual')!==undefined?ov('icActual'):dates.icDue;
+
+  // 6. existingDocDelivery (uses edTrigger)
+  var icTrig=S.edTrigger==='icActual'?dates.icActual:acc;
+  if(shouldCalc('existingDocDelivery')){
+    dates.existingDocDelivery=resolved('existingDocDelivery', icTrig?applyOff('existingDocDelivery', icTrig, effectiveOff('existingDocDelivery')):null);
+  } else {
+    dates.existingDocDelivery=resolved('existingDocDelivery',null);
+  }
+
+  // 7a. Due Diligence Objection (acceptance-anchored)
+  if(shouldCalc('dueDiligenceObjection')){
+    dates.dueDiligenceObjection=resolved('dueDiligenceObjection', acc?applyOff('dueDiligenceObjection', acc, effectiveOff('dueDiligenceObjection')):null);
+  } else {
+    dates.dueDiligenceObjection=resolved('dueDiligenceObjection',null);
+  }
+
+  // 7b. Due Diligence Resolution (anchor selectable via S.ddrAnchor)
+  var ddrAnchorDate=(function(){
+    var a=S.ddrAnchor;
+    if(a==='acceptanceDate') return acc;
+    if(a==='ddObjection'||a==='dueDiligenceObjection') return dates.dueDiligenceObjection;
+    return dates[a]||dates.dueDiligenceObjection;
+  })();
+  if(shouldCalc('dueDiligenceResolution')){
+    dates.dueDiligenceResolution=resolved('dueDiligenceResolution', ddrAnchorDate?applyOff('dueDiligenceResolution', ddrAnchorDate, effectiveOff('dueDiligenceResolution')):null);
+  } else {
+    dates.dueDiligenceResolution=resolved('dueDiligenceResolution',null);
+  }
+
+  // 8. titleCommitment (user input only)
+  dates.titleCommitment=ov('titleCommitment')||null;
+
+  // 9. newSurveyOrder
+  if(shouldCalc('newSurveyOrder')&&dates.titleCommitment){
+    dates.newSurveyOrder=resolved('newSurveyOrder', applyOff('newSurveyOrder', dates.titleCommitment, effectiveOff('newSurveyOrder')));
+  } else {
+    dates.newSurveyOrder=resolved('newSurveyOrder',null);
+  }
+
+  // 10. closingDate — in custom mode, use banner input OR spinner (banner takes priority)
+  if(isCustom&&S.customClosing&&!S.dayOverrides['closingDate']){
+    dates.closingDate=ov('closingDate')||parseYMD(S.customClosing);
+  } else if(shouldCalc('closingDate')){
+    dates.closingDate=resolved('closingDate', acc?applyOff('closingDate', acc, effectiveOff('closingDate'), true):null);
+  } else {
+    dates.closingDate=resolved('closingDate',null);
+  }
+  var cls=dates.closingDate;
+
+  // 11. Close-anchored fields
+  ['newSurveyDelivery','newSurveyObjection','newSurveyResolution','repairCompletion','finalWalkthrough','loanContingency'].forEach(function(k){
+    if(shouldCalc(k)){
+      dates[k]=resolved(k, cls?applyOff(k, cls, effectiveOff(k)):null);
+    } else {
+      dates[k]=resolved(k,null);
+    }
+    if(dates[k]&&acc&&dates[k]<acc) warns[k]='Falls before acceptance date';
+  });
+
+  // Build effective dates: roll any date that falls on weekend/holiday.
+  // effective[k] is only set when it differs from dates[k].
+  var effective={};
+  Object.keys(dates).forEach(function(k){
+    var d=dates[k];
+    if(!d) return;
+    if(k==='closingDate') return; // closing warned separately, never auto-rolled
+    if(k==='offerExpiration') return; // offer expiration uses exact calendar date per contract
+    if(isWeekendOrHol(d)){
+      effective[k]=nextBizDay(d);
+    }
+  });
+
+  // Closing date weekend/holiday warning (display only)
+  if(dates.closingDate && isWeekendOrHol(dates.closingDate)){
+    warns.closingDate='Business Day Required';
+  }
+
+  return {dates:dates, warns:warns, bumped:bumped, effective:effective};
+}
+
+/* ============================================================
+   COLUMN VALUE HELPERS
+   daysColHtml  — renders the Days spinner + Effective Date label
+   anchorColHtml — renders the anchor label, toggle, or DDR dropdown
+   dateColHtml  — renders the merged date input with day-of-week label
+   ============================================================ */
+/** Renders the Days column cell: numeric spinner + optional Effective Date label.
+ * @param fd - field definition object
+ * @param offs - current preset offsets (null in custom mode)
+ * @param computed - calc() output for effective date lookup */
+function daysColHtml(fd, offs, computed){
+  var k=fd.k, isCustom=S.mode==='custom';
+  if(fd.inputOnly) return '<span class="days-input">input</span>';
+  if(fd.isDefault){
+    return '<span class="days-default">default</span>';
+  }
+  var dov=S.dayOverrides[k];
+  var hasDov=dov!==undefined;
+  var isCloseAnchored=fd.anch==='close';
+  var minAttr=isCloseAnchored?'max="0"':'min="0"';
+  var effDate=computed&&computed.effective&&computed.effective[k];
+  var effHtml=effDate?'<span class="effective-date">Eff: '+fmtDisplay(effDate)+'</span>':'';
+  // Custom mode uses same spinner as other modes
+  if(!offs||!fd.offKey) return '<span class="days-zero">—</span>';
+  var presetVal=offs[fd.offKey];
+  // Show 0 as a valid offset (calculates to anchor date) — no suppression
+  var displayVal=hasDov?dov:presetVal;
+  var spinCls='days-spinner'+(hasDov?' days-spinner-ov':'');
+  return '<input type="number" class="'+spinCls+'" value="'+displayVal+'" '+minAttr+' onchange="App.setDayOverride(\''+k+'\',this.value)" onblur="App.setDayOverride(\''+k+'\',this.value)" step="1">'+effHtml;
+}
+
+/** Renders the Anchor column: static label, Acceptance/IC toggle for
+ * existingDocDelivery, or the anchor dropdown for dueDiligenceResolution. */
+function anchorColHtml(fd){
+  var k=fd.k;
+  if(fd.inputOnly) return '<span class="anchor-name" style="color:#16a34a">User Input</span>';
+  if(fd.isDefault) return '<span class="anchor-name">'+esc(fd.defLbl)+'</span>';
+  if(k==='dueDiligenceResolution'){
+    var ddrOpts=[
+      ['acceptanceDate',           'Acceptance'],
+      ['ddObjection',              'Due Diligence Objection (33. A.) — default'],
+      ['offerExpiration',          'Offer Expiration (1. I.)'],
+      ['earnestMoneyDue',          'Earnest Money Delivery (6.)'],
+      ['icDue',                    'Independent Consideration Delivery (7. A. ii.)'],
+      ['icActual',                 'Independent Consideration Actual Delivery'],
+      ['loanApplication',          'Loan Application (8. C. ii.)'],
+      ['appraisalOrder',           'Appraisal Order (10. A. i. or ii.)'],
+      ['titleCommitment',          'Title Commitment Receipt'],
+      ['existingDocDelivery',      'Existing Document Delivery (32.)'],
+      ['existingSurveyDelivery',   'Existing Survey Delivery (40. A. i.)'],
+      ['sellerInspectionOrder',    'Seller Inspection Order (5138 3.)'],
+      ['sellerInspectionDelivery', 'Seller Inspection Delivery (5138 4.)'],
+      ['dueDiligenceObjection',    'Due Diligence Objection (33. A.)']
+    ];
+    var sel='<select class="anchor-sel" onchange="App.setDdrAnchor(this.value)">';
+    ddrOpts.forEach(function(o){
+      sel+='<option value="'+o[0]+'"'+(S.ddrAnchor===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';
+    });
+    sel+='</select>';
+    return sel;
+  }
+  var lbl=fd.anchLbl||'';
+  if(k==='existingDocDelivery') lbl=S.edTrigger==='icActual'?'IC Actual Delivery':'Acceptance';
+  var html='<span class="anchor-name">'+esc(lbl)+'</span>';
+  if(fd.toggle){
+    var aAcc=S.edTrigger==='acceptance';
+    html+='<div class="anchor-toggle">'      +'<div class="tgl-group">'      +'<button class="tgl-btn'+(aAcc?' active':'')+'" onclick="App.setEdTrigger(\'acceptance\')">Acceptance</button>'      +'<button class="tgl-btn'+(!aAcc?' active':'')+'" onclick="App.setEdTrigger(\'icActual\')">IC Actual</button>'      +'</div></div>';
+  }
+  return html;
+}
+
+/** Renders the Calculated Date column: day-of-week label + merged date input.
+ * Applies weekend-flag amber styling and warning text when date falls on
+ * a non-business day. Reset button appears when a day override is active. */
+function dateColHtml(k, computed){
+  var date=computed.dates[k];
+  var warn=computed.warns[k];
+  var hasOv=S.dayOverrides[k]!==undefined;
+  var fd=FD_MAP[k];
+  var errMsg=_ovErrors[k]||'';
+
+  var awaiting=null;
+  if(k==='newSurveyOrder'&&!computed.dates.titleCommitment) awaiting='Title Commitment Receipt';
+  else if(!fd.inputOnly&&!fd.isDefault&&!computed.dates.offerDate) awaiting='Offer Date';
+
+  if(awaiting&&!date){
+    return '<span class="date-awaiting">— Awaiting '+awaiting+'</span>';
+  }
+
+  var html='<div class="date-cell">';
+  var dateStr=date?toYMD(date):'';
+  var isWeekendHol=date&&isWeekendOrHol(date);
+  var resetBtn=hasOv?'<button class="btn-rv" onclick="App.resetField(\''+k+'\')" title="Reset to preset">↺</button>':'';
+
+  if(fd.inputOnly){
+    var inputOv=S.overrides[k]||'';
+    html+='<input class="date-inp'+(inputOv?' modified':'')+'" type="date" value="'+inputOv
+      +'" onchange="App.setOverride(\''+k+'\',this.value)">';
+  } else if(fd.isDefault){
+    var defOv=S.overrides[k]||'';
+    var defDisplay=date?toYMD(date):'';
+    var defVal=defOv||defDisplay;
+    var defDayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var defDayLabel=date?'<span class="day-label">'+defDayNames[date.getDay()]+'</span>':'';
+    html+=defDayLabel
+    html+='<input class="date-inp'+(defOv?' modified':'')+(isWeekendHol?' weekend-flag':'')+'" type="date" value="'+defVal
+      +'" onchange="App.setOverride(\''+k+'\',this.value)">'
+      +(defOv?'<button class="btn-rv" onclick="App.resetField(\''+k+'\')" title="Reset">↺</button>':'');
+  } else {
+    var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var dayLabel=date?'<span class="day-label">'+days[date.getDay()]+'</span>':'';
+    var inpCls='date-inp'+(hasOv?' modified':'')+(isWeekendHol?' weekend-flag':'');
+    html+=dayLabel+'<input class="'+inpCls+'" type="date" value="'+dateStr
+      +'" onchange="App.setDateFromPicker(\''+k+'\',this.value)">'
+      +resetBtn;
+    if(isWeekendHol){
+      // Closing uses its own warn message; all others use the generic weekend warning
+      if(k==='closingDate'){
+        html+='<span class="date-warn">⚠ Business Day Required</span>';
+      } else {
+        html+='<span class="date-warn-soft">⚠ Weekend or Holiday Performance Required</span>';
+      }
+    }
+    if(warn&&warn.includes('before')){
+      html+='<span class="date-warn">⚠ '+esc(warn)+'</span>';
+    } else if(warn&&!isWeekendHol&&k!=='closingDate'){
+      html+='<span class="date-warn-soft">⚠ '+esc(warn)+'</span>';
+    }
+  }
+
+  if(errMsg) html+='<span class="ov-error">⚠ '+esc(errMsg)+'</span>';
+  html+='</div>';
+  return html;
+}
+
+/* ============================================================
+   OVERRIDE VALIDATION
+   Called before saving any date-picker override. Enforces:
+     - Offer Expiration must be between Offer Date and Closing
+     - Acceptance must be >= Offer Date and <= Closing
+     - All other milestones must be >= Acceptance and <= Closing
+   Returns {ok: bool, msg: string}.
+   ============================================================ */
+// Returns {ok:true} or {ok:false, msg:'...'}.
+// Called BEFORE saving an override so invalid dates are rejected.
+/** Validates a proposed date-picker override before saving it.
+ * Enforces chronological ordering constraints between milestones.
+ * @returns {ok: boolean, msg: string} */
+function _validateOverride(k, newDateStr){
+  var nd=parseYMD(newDateStr);
+  if(!nd) return {ok:true}; // clearing always allowed
+
+  var cur=calc(); // current state before the proposed change
+  var offerDate=cur.dates.offerDate;
+
+  var cls=cur.dates.closingDate;
+
+  // ── Offer Expiration: offer date ≤ expiration ≤ acceptance ≤ closing ──
+  if(k==='offerExpiration'){
+    if(offerDate && nd<offerDate)
+      return {ok:false, msg:'Must be on or after Offer Date ('+fmtDisplay(offerDate)+')'};
+    // Enforce upper bound against current acceptance date (whether overridden or defaulted)
+    var accDate=cur.dates.acceptanceDate;
+    if(accDate && nd>accDate)
+      return {ok:false, msg:'Must be on or before Acceptance Date ('+fmtDisplay(accDate)+')'};
+    if(cls && nd>cls)
+      return {ok:false, msg:'Must be on or before Closing ('+fmtDisplay(cls)+')'};
+    return {ok:true};
+  }
+
+  // ── Acceptance Date: must be ≥ offer date and ≥ offer expiration; must be ≤ closing ──
+  if(k==='acceptanceDate'){
+    if(offerDate && nd<offerDate)
+      return {ok:false, msg:'Must be on or after Offer Date ('+fmtDisplay(offerDate)+')'};
+    if(cls && nd>cls)
+      return {ok:false, msg:'Must be on or before Closing ('+fmtDisplay(cls)+')'};
+    return {ok:true};
+  }
+
+  // ── All other milestone overrides: must be ≥ acceptance date ──
+  var acc=cur.dates.acceptanceDate;
+  if(acc && nd<acc)
+    return {ok:false, msg:'Must be on or after Acceptance Date ('+fmtDisplay(acc)+')'};
+
+  // ── Upper bound: no milestone (except Closing itself) may exceed Closing Date ──
+  if(k!=='closingDate' && cls && nd>cls)
+    return {ok:false, msg:'Must be on or before Closing ('+fmtDisplay(cls)+')'};
+
+  return {ok:true};
+}
+
+/* ============================================================
+   RENDERING
+   render() is the single entry point for all UI updates.
+   It recalculates state via calc() then calls each sub-renderer.
+   Sub-renderers write directly to the DOM via innerHTML.
+   ============================================================ */
+/** Main render entry point. Recalculates all dates then repaints
+ * all UI sections. Call after any state change. */
+function render(){
+  var computed=calc();
+  _renderModeTabs();
+  _renderBannerRows();
+  _renderGroups(computed);
+  _renderPrintHeader(computed);
+  if(_calView==='calendar') _renderCalendar(computed);
+  if(_calView==='timeline') _renderTimelineView(computed);
+}
+
+function _renderModeTabs(){
+  var tabs=[{m:'40day',l:'30 Day Close'},{m:'45day',l:'45 Day Close'},{m:'60day',l:'60 Day Close'},{m:'user',l:'My Preset'},{m:'custom',l:'Custom'}];
+  document.getElementById('modeTabs').innerHTML=tabs.map(function(t){
+    return '<button class="mode-tab'+(S.mode===t.m?' active':'')+'" onclick="App.setMode(\''+t.m+'\')">'+t.l+'</button>';
+  }).join('');
+}
+
+
+
+function _renderBannerRows(){
+  var cc=document.getElementById('customClosingRow');
+  cc.style.display=S.mode==='custom'?'':'none';
+  if(S.mode==='custom'){
+    // Sync banner: if spinner drove closing, show that date
+    var computed_cls=calc().dates.closingDate;
+    var bannerVal=S.customClosing||(computed_cls?toYMD(computed_cls):'');
+    document.getElementById('customClosingInput').value=bannerVal;
+  }
+  document.getElementById('customHint').style.display=S.mode==='custom'?'':'none';
+  document.getElementById('offerDateInput').value=S.offerDate||'';
+}
+
+/** Renders all milestone group sections into #groupsContainer.
+ * Increments sequential milestone counter across all groups. */
+function _renderGroups(computed){
+  var offs=getOffsets();
+  var loanSuppressed=!S.includeLoan;
+  // Auto-manage icActual skip: show when actively used, skip otherwise.
+  // User can always manually override via the Skip button.
+  var icActualNeeded=(S.edTrigger==='icActual')||(S.ddrAnchor==='icActual');
+  if(icActualNeeded && S.ignored.icActual && !S._icActualManualSkip){
+    // Auto-show: user activated IC Actual somewhere
+    delete S.ignored.icActual;
+  } else if(!icActualNeeded && !S.ignored.icActual && !S._icActualManualShow){
+    // Auto-hide: IC Actual not needed and user hasn't manually shown it
+    S.ignored.icActual=true;
+  }
+  var buf=[];
+
+  var _milestoneCounter=0;
+  GROUPS.forEach(function(grp){
+    // Filter keys: all defined fields shown (loan fields greyed out when suppressed)
+    var keys=grp.keys.filter(function(k){ return !!FD_MAP[k]; });
+    if(!keys.length) return;
+
+    // Section-level ignore (New Survey only)
+    var secIgnored=!!S.ignoredSections[grp.id];
+    var secIgnoreCb='';
+    if(grp.id==='newsurvey'){
+      secIgnoreCb='<button class="btn-hdr-pill'+(secIgnored?'':' yes')+'" onclick="App.toggleSectionIgnore(\'newsurvey\',' +(secIgnored?'false':'true')+')">'
+        +(secIgnored?'Survey: No':'Survey: Yes')
+        +'</button>';
+    }
+
+    buf.push('<div class="group-section'+(secIgnored?' group-section-ignored':'')+'">');
+    var extraHeaderCtrl='';
+    if(grp.id==='financing'){
+      var loanOn=S.includeLoan;
+      extraHeaderCtrl='<button class="btn-hdr-pill'+(loanOn?' yes':'')+'" onclick="App.toggleLoanDates()">'
+        +(loanOn?'Loan: Yes':'Loan: No')
+        +'</button>';
+    }
+    var grpStyle=({'offer':'background:#1d4ed8','financing':'background:#0d9488','dd':'background:#ea580c','newsurvey':'background:#6d28d9','insurance':'background:#0891b2','closing':'background:#b91c1c'}[grp.id])||'background:#1e293b';
+    buf.push('<div class="group-header" style="'+grpStyle+'"><span class="group-icon">'+grp.icon+'</span> '+esc(grp.lbl)+secIgnoreCb+extraHeaderCtrl+'</div>');
+    buf.push('<table class="group-table"><thead><tr>'
+      +'<th class="col-milestone">Milestone</th>'
+      +'<th class="col-anchor">Anchor</th>'
+      +'<th class="col-days">Days / Effective</th>'
+      +'<th class="col-date">Calculated Date</th>'
+      +'<th class="col-ignore" style="font-size:.67rem;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-align:center">Skip</th>'
+      +'</tr></thead><tbody>');
+
+    // Fields that get individual ignore checkboxes
+    var IGNORABLE=['icActual','proofOfFunds','appraisalOrder','existingSurveyDelivery','sellerInspectionOrder','sellerInspectionDelivery'];
+
+    keys.forEach(function(k){
+      var fd=FD_MAP[k];
+      var date=computed.dates[k];
+      var warn=computed.warns[k];
+      var hasOv=S.overrides[k]!==undefined;
+      var hasDayOv=S.dayOverrides[k]!==undefined;
+      var hasAnyOv=hasOv||hasDayOv;
+      var isIgnored=secIgnored||(loanSuppressed&&!!fd.loan)||!!S.ignored[k];
+
+      var rowCls='';
+      if(isIgnored) rowCls='row-ignored';
+      else if(fd.inputOnly) rowCls='row-input';
+      else if(k==='closingDate'&&warn) rowCls='row-closing-warn';
+      else if(hasAnyOv) rowCls='row-overridden';
+      else if(warn&&warn.includes('before')) rowCls='row-warn';
+
+      var msNameCls='ms-name'+(hasAnyOv&&!isIgnored?' ov':'');
+      var editBadge=(hasAnyOv&&!isIgnored)?'<span class="ms-edit-badge">✏</span>':'';
+
+      if(!fd.inputOnly&&!fd.isDefault) _milestoneCounter++;
+      var numBadge=(!fd.inputOnly&&!fd.isDefault)?'<span class="ms-num">'+_milestoneCounter+'.</span> ':'';
+
+      var msCell='<td class="col-milestone">'        +'<span class="'+msNameCls+'">'+numBadge+esc(fd.lbl)+editBadge+'</span>'        +'</td>';
+
+      var ignoreTd='<td class="col-ignore" style="text-align:center;vertical-align:middle">';
+      if(IGNORABLE.indexOf(k)>=0){
+        var isSkipped=!!S.ignored[k];
+        ignoreTd+='<button class="btn-skip'+(isSkipped?' skipped':'')+'" onclick="App.toggleIgnore(\''+k+'\','+(isSkipped?'false':'true')+')">Skip</button>';
+      }
+      ignoreTd+='</td>';
+
+      buf.push('<tr class="'+rowCls+'">'        +msCell        +'<td class="col-anchor">'+anchorColHtml(fd)+'</td>'        +'<td class="col-days">'+daysColHtml(fd,offs,computed)+'</td>'        +'<td class="col-date">'+dateColHtml(k,computed)+'</td>'        +ignoreTd        +'</tr>');
+    });
+
+    buf.push('</tbody></table></div>');
+  });
+
+  document.getElementById('groupsContainer').innerHTML=buf.join('');
+}
+
+function _renderPrintHeader(computed){
+  var ml={'40day':'30 Day Close','45day':'45 Day Close','60day':'60 Day Close','user':'My Preset','custom':'Custom'};
+  var od=computed.dates.offerDate?fmtDisplay(computed.dates.offerDate):'Not set';
+  var prop=S.propertyName?(' &nbsp;|&nbsp; <strong>'+esc(S.propertyName)+'</strong>'):'';
+  document.getElementById('printInfo').innerHTML=
+    '<strong>Transaction Date Summary</strong>'+prop
+    +' &nbsp;|&nbsp; Offer: '+od
+    +' &nbsp;|&nbsp; Mode: '+ml[S.mode]
+    +' &nbsp;|&nbsp; Printed: '+fmtDisplay(new Date());
+  // Also update the page title for print
+  document.getElementById('propertyNameInput').value=S.propertyName;
+}
+
+/* ============================================================
+   SETTINGS PANEL
+   Slide-in panel (right side) for managing preset offsets and holidays.
+   _sTab controls the active settings tab (holidays | presets).
+   _pTab controls the active preset tab (40day | 45day | 60day | user).
+   _ovErrors holds transient validation error messages keyed by field.
+   ============================================================ */
+var _sTab='holidays', _pTab='40day';
+var _ovErrors={}; // transient override validation errors { fieldKey: 'message' }
+
+function openSettings(){
+  document.getElementById('settingsOverlay').classList.add('open');
+  document.getElementById('settingsPanel').classList.add('open');
+  _renderSettings();
+}
+function closeSettings(){
+  document.getElementById('settingsOverlay').classList.remove('open');
+  document.getElementById('settingsPanel').classList.remove('open');
+}
+function _renderSettings(){
+  var html='<div class="stabs">'
+    +_stab('holidays','Holidays')
+    +_stab('presets','Presets')
+    +'</div>';
+  html+=_sTab==='holidays'?_renderHolSettings():_renderPresetSettings();
+  document.getElementById('spBody').innerHTML=html;
+}
+function _stab(id,lbl){ return '<button class="stab'+(_sTab===id?' active':'')+'" onclick="App.switchSTab(\''+id+'\')">'+lbl+'</button>'; }
+function _ptab(id,lbl){ return '<button class="stab'+(_pTab===id?' active':'')+'" onclick="App.switchPTab(\''+id+'\')">'+lbl+'</button>'; }
+
+function _renderHolSettings(){
+  var html='<div class="sp-section"><h3>Holiday Configuration</h3><div class="holiday-list">';
+  S.settings.holidays.forEach(function(h,i){
+    html+='<div class="hol-item"><div class="hol-info">'
+      +'<span class="hol-name">'+esc(h.name)+'</span>'
+      +'<span class="hol-rule">'+_holRule(h)+'</span>'
+      +'</div><button class="btn-del-hol" onclick="App.deleteHol('+i+')" title="Remove">✕</button></div>';
+  });
+  html+='</div><button class="btn-add-hol" onclick="App.showAddHolModal()">+ Add Holiday</button></div>';
+  return html;
+}
+function _holRule(h){
+  var mn=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  if(h.type==='fixed')  return 'Fixed: '+mn[h.month]+' '+h.day;
+  if(h.type==='nth')    return _ord(h.nth)+' '+dn[h.wd]+' of '+mn[h.month];
+  if(h.type==='last')   return 'Last '+dn[h.wd]+' of '+mn[h.month];
+  if(h.type==='custom') return 'Custom: '+(h.date||'');
+  return '';
+}
+function _ord(n){ var s=['th','st','nd','rd'],v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+
+function _renderPresetSettings(){
+  var html='<div class="stabs">'
+    +_ptab('40day','30 Day')
+    +_ptab('45day','45 Day')
+    +_ptab('60day','60 Day')
+    +_ptab('user','My Preset')
+    +'</div>';
+  var pk=_pTab, offs=S.settings.presets[pk];
+
+  var rows=[
+    {k:'offerExpiration',        l:'Offer Expiration (1. I.)',                       a:'Offer'},
+    {k:'earnestMoneyDue',        l:'Earnest Money Delivery (6.)',                    a:'Acceptance'},
+    {k:'icDue',                  l:'Independent Consideration Delivery (7. A. ii.)', a:'Acceptance'},
+    {k:'proofOfFunds',           l:'Proof of Funds (8. A.)',                         a:'Acceptance'},
+    {k:'prequalLetter',          l:'Pre-qualification Letter (8. C. i.)',            a:'Acceptance', loan:true},
+    {k:'loanApplication',        l:'Loan Application (8. C. ii.)',                   a:'Acceptance', loan:true},
+    {k:'appraisalOrder',         l:'Appraisal Order (10. A. i. or ii.)',             a:'Acceptance'},
+    {k:'existingDocDelivery',    l:'Existing Document Delivery (32.)',               a:'Acceptance/IC'},
+    {k:'existingSurveyDelivery', l:'Existing Survey Delivery (40. A. i.)',           a:'Acceptance'},
+    {k:'sellerInspectionOrder',   l:'Seller Inspection Order (5138 3.)',             a:'Acceptance'},
+    {k:'sellerInspectionDelivery',l:'Seller Inspection Delivery (5138 4.)',          a:'Acceptance'},
+    {k:'dueDiligenceObjection',  l:'Due Diligence Objection (33. A.)',               a:'Acceptance'},
+    {k:'dueDiligenceResolution', l:'Due Diligence Resolution (33. D.)',              a:'DD Objection (default — anchor selectable in Detail View)'},
+    {k:'loanContingency',        l:'Final Loan Approval (8. C. iv.)',               a:'Closing',    loan:true},
+    {k:'newSurveyOrder',         l:'New Survey Order (40. B. i.)',                  a:'Title Commitment'},
+    {k:'hoInsuranceContingency', l:'Homeowners Insurance Contingency (18. B.)',      a:'Acceptance'},
+    {k:'closingDate',            l:'Closing (1. G.) and Funding (44. B)',           a:'Acceptance'},
+    {k:'newSurveyDelivery',      l:'New Survey Delivery (40. B. ii.)',              a:'Closing'},
+    {k:'newSurveyObjection',     l:'New Survey Objection (40. B. iii.)',            a:'Closing'},
+    {k:'newSurveyResolution',    l:'New Survey Resolution (40. B. iv.)',            a:'Closing'},
+    {k:'repairCompletion',       l:'Repair Completion (33. D. ii.)',                a:'Closing'},
+    {k:'finalWalkthrough',       l:'Pre-Closing Walkthrough (43.)',                 a:'Closing'}
+  ];
+  html+='<table class="off-table"><thead><tr><th>Field</th><th>Anchor</th><th style="text-align:right">Days</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    html+='<tr><td>'+r.l+(r.loan?' <em style="font-size:.7rem;color:#94a3b8">(loan)</em>':'')+'</td>'
+      +'<td style="color:#64748b">'+r.a+'</td>'
+      +'<td style="text-align:right"><input class="off-inp" type="number" value="'+(offs[r.k]||0)+'" '
+      +'onchange="App.updateOff(\''+pk+'\',\''+r.k+'\',this.value)"></td></tr>';
+  });
+  html+='</tbody></table>';
+  html+='<button class="btn-reset-def" onclick="App.resetPreset(\''+pk+'\')">↺ Reset to Defaults</button>';
+  return html;
+}
+
+/* ============================================================
+   PUBLIC APP API
+   ============================================================ */
+window.App = {
+  switchView:function(v){
+    _calView=v;
+    ['detail','calendar','timeline','help'].forEach(function(id){
+      document.getElementById('pane'+id.charAt(0).toUpperCase()+id.slice(1)).classList.toggle('active',v===id);
+      document.getElementById('tab'+id.charAt(0).toUpperCase()+id.slice(1)).classList.toggle('active',v===id);
+    });
+    if(v==='calendar') _renderCalendar(calc());
+    if(v==='timeline') _renderTimelineView(calc());
+    if(v==='help') _renderHelp();
+  },
+  setMode:function(m){
+    S.mode=m; S.overrides={}; S.dayOverrides={}; S.edTrigger='acceptance';
+    S.ddrAnchor='ddObjection';
+    delete S._icActualManualSkip; delete S._icActualManualShow;
+    // Per-mode defaults for Loan, New Survey, and individual field skips
+    if(m==='40day'){
+      S.ignored={icActual:true};
+      S.includeLoan=false; S.ignoredSections={newsurvey:true};
+    } else if(m==='45day'){
+      S.ignored={icActual:true,proofOfFunds:true};
+      S.includeLoan=true; S.ignoredSections={newsurvey:true};
+    } else if(m==='60day'){
+      S.ignored={icActual:true,proofOfFunds:true};
+      S.includeLoan=true; S.ignoredSections={};
+    } else {
+      S.ignored={icActual:true};
+      S.includeLoan=true; S.ignoredSections={};
+    }
+    render();
+  },
+  setPropertyName:function(v){ S.propertyName=v||''; _renderPrintHeader(calc()); },
+  toggleIgnore:function(k,v){
+    var on=(v===true||v==='true');
+    if(on){ S.ignored[k]=true; }
+    else { delete S.ignored[k]; }
+    // Track manual override for icActual so auto-logic doesn't fight the user
+    if(k==='icActual'){
+      var icActualNeeded=(S.edTrigger==='icActual')||(S.ddrAnchor==='icActual');
+      if(icActualNeeded&&on) S._icActualManualSkip=true;
+      else if(!icActualNeeded&&!on) S._icActualManualShow=true;
+      else { delete S._icActualManualSkip; delete S._icActualManualShow; }
+    }
+    render();
+  },
+  toggleSectionIgnore:function(id,v){ var on=(v===true||v==='true'); if(on)S.ignoredSections[id]=true; else delete S.ignoredSections[id]; render(); },
+  exportCalendar:function(){
+    var computed=calc();
+    var calName=S.propertyName?S.propertyName+' — RE Transaction Dates':'RE Transaction Dates';
+    var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RE Transaction Date Calculator//EN',
+      'CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:'+_icsEsc(calName)];
+
+    // Collect all keys to export: grouped fields + titleCommitment (ungrouped input field)
+    var exportKeys=[];
+    GROUPS.forEach(function(grp){
+      if(S.ignoredSections[grp.id]) return;
+      grp.keys.forEach(function(k){ exportKeys.push(k); });
+    });
+    // Insert titleCommitment after existingSurveyDelivery if not ignored
+    if(!S.ignored['titleCommitment'] && !S.ignoredSections['dd']){
+      var insertAfter=exportKeys.indexOf('existingSurveyDelivery');
+      if(insertAfter>=0) exportKeys.splice(insertAfter+1,0,'titleCommitment');
+      else exportKeys.unshift('titleCommitment');
+    }
+
+    // These keys are excluded from calendar export (reference fields, not performance deadlines)
+    var calExclude={icActual:true, acceptanceDate:true, offerDate:true};
+
+    exportKeys.forEach(function(k){
+      if(calExclude[k]) return;
+      if(S.ignored[k]) return;
+      var fd=FD_MAP[k]; if(!fd) return;
+      if(fd.loan&&!S.includeLoan) return;
+      var date=computed.dates[k]; if(!date) return;
+      // Export the calculated (contract) date — not the effective/rolled date
+      var exportDate=date;
+      var ds=toYMD(exportDate).replace(/-/g,'');
+      var de=toYMD(addDays(exportDate,1)).replace(/-/g,'');
+      // Property name leads the summary when set
+      var summary=S.propertyName
+        ? _icsEsc(S.propertyName+' — '+fd.lbl)
+        : _icsEsc(fd.lbl);
+      // Build DESCRIPTION: note effective date when date falls on weekend/holiday
+      var descParts=[];
+      var effDate=computed.effective&&computed.effective[k];
+      if(effDate){
+        descParts.push('Contract Date: '+fmtDisplay(date));
+        descParts.push('Effective (Business) Date: '+fmtDisplay(effDate));
+        descParts.push('Note: Contract date falls on a weekend or holiday. Performance under Days language is due on the Effective Date.');
+      }
+      var description=descParts.length?descParts.join('\\n'):'';
+      lines.push('BEGIN:VEVENT');
+      lines.push('DTSTART;VALUE=DATE:'+ds);
+      lines.push('DTEND;VALUE=DATE:'+de);
+      lines.push('SUMMARY:'+summary);
+      if(description) lines.push('DESCRIPTION:'+_icsEsc(description));
+      lines.push('UID:redatecalc-'+k+'-'+ds+'@redatecalc');
+      lines.push('END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    var blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download=(S.propertyName||'re-transaction').replace(/[^a-z0-9]/gi,'-').toLowerCase()+'-dates.ics';
+    a.click(); URL.revokeObjectURL(url);
+  },
+  setOfferDate:function(v){ S.offerDate=v||null; render(); },
+  setCustomClosing:function(v){ S.customClosing=v||null; render(); },
+  setOverride:function(k,v){
+    if(v){
+      var vr=_validateOverride(k,v);
+      if(!vr.ok){
+        _ovErrors[k]=vr.msg; render();
+        setTimeout(function(){ delete _ovErrors[k]; render(); },4000);
+        return;
+      }
+    }
+    delete _ovErrors[k];
+    if(v) S.overrides[k]=v; else delete S.overrides[k];
+    render();
+  },
+  resetField:function(k){ delete S.overrides[k]; delete S.dayOverrides[k]; delete _ovErrors[k]; render(); },
+  setDayOverride:function(k,v){
+    var n=parseInt(v,10);
+    if(v===''||v===null||isNaN(n)){ delete S.dayOverrides[k]; render(); return; }
+    var fd=FD_MAP[k];
+    var isCloseAnchored=fd&&fd.anch==='close';
+    if(isCloseAnchored&&n>0){
+      _ovErrors[k]='Close-anchored fields must be 0 or negative'; render();
+      setTimeout(function(){ delete _ovErrors[k]; render(); },4000); return;
+    }
+    if(!isCloseAnchored&&n<0){
+      _ovErrors[k]='Must be 0 or positive'; render();
+      setTimeout(function(){ delete _ovErrors[k]; render(); },4000); return;
+    }
+    S.dayOverrides[k]=n;
+    render();
+  },
+  setDateFromPicker:function(k,v){
+    if(!v){ delete S.dayOverrides[k]; render(); return; }
+    var nd=parseYMD(v);
+    if(!nd){ render(); return; }
+    var computed=calc();
+    var fd=FD_MAP[k];
+    var anchorDate=null;
+    if(fd.anch==='acceptance') anchorDate=computed.dates.acceptanceDate;
+    else if(fd.anch==='close') anchorDate=computed.dates.closingDate;
+    else if(fd.anch==='offerDate') anchorDate=computed.dates.offerDate;
+    else if(fd.anch==='titleReceipt') anchorDate=computed.dates.titleCommitment;
+    else if(fd.anch==='ddObjection'){
+      anchorDate=(k==='dueDiligenceResolution')?(computed.dates[S.ddrAnchor]||computed.dates.dueDiligenceObjection):computed.dates.dueDiligenceObjection;
+    }
+    else if(fd.anch==='icTrigger') anchorDate=S.edTrigger==='icActual'?computed.dates.icActual:computed.dates.acceptanceDate;
+    if(!anchorDate){ render(); return; }
+    var offset=diffDays(anchorDate,nd);
+    var isCloseAnchored=fd.anch==='close';
+    if(isCloseAnchored&&offset>0){
+      _ovErrors[k]='Close-anchored fields must be 0 or negative'; render();
+      setTimeout(function(){ delete _ovErrors[k]; render(); },4000); return;
+    }
+    if(!isCloseAnchored&&offset<0){
+      _ovErrors[k]='Must be 0 or positive (date is before anchor)'; render();
+      setTimeout(function(){ delete _ovErrors[k]; render(); },4000); return;
+    }
+    S.dayOverrides[k]=offset;
+    render();
+  },
+  setDdrAnchor:function(v){ S.ddrAnchor=v||'ddObjection'; delete S._icActualManualSkip; delete S._icActualManualShow; render(); },
+  setEdTrigger:function(v){ S.edTrigger=v; delete S._icActualManualSkip; delete S._icActualManualShow; render(); },
+  openSettings:openSettings,
+  closeSettings:closeSettings,
+  switchSTab:function(t){ _sTab=t; _renderSettings(); },
+  switchPTab:function(t){ _pTab=t; _renderSettings(); },
+  deleteHol:function(i){ S.settings.holidays.splice(i,1); clearHolCache(); saveSettings(); _renderSettings(); render(); },
+  showAddHolModal:_showAddHolModal,
+  printView:function(){
+    generatePDF();
+  },
+  toggleLoanDates:function(){ S.includeLoan=!S.includeLoan; render(); },
+  _tlTip:function(e,lbl,date,isGhost){
+    var tip=document.getElementById('calTooltip');
+    if(!tip) return;
+    tip.innerHTML=(isGhost?'<em style="color:#7c3aed;font-size:.7rem">Rollover Date</em><br>':'')+esc(lbl)+'<br><span style="color:#94a3b8;font-size:.72rem">'+esc(date)+'</span>';
+    tip.style.display='block';
+    tip.style.left=(e.clientX+12)+'px';
+    tip.style.top=(e.clientY-8)+'px';
+  },
+  _tlTipHide:function(){
+    var tip=document.getElementById('calTooltip');
+    if(tip) tip.style.display='none';
+  },
+  toggleMoreMenu:function(){
+    var m=document.getElementById('moreMenu');
+    if(m) m.classList.toggle('open');
+  },
+  closeMoreMenu:function(){
+    var m=document.getElementById('moreMenu');
+    if(m) m.classList.remove('open');
+  },
+  saveToMyPreset:function(){
+    var offs=getOffsets();
+    // Build a label describing source mode for the confirmation message
+    var modeLabel={'40day':'30 Day','45day':'45 Day','60day':'60 Day','user':'My Preset','custom':'Custom'}[S.mode]||S.mode;
+    if(!confirm('Save current day offsets ('+modeLabel+' + any overrides) to My Preset?\nThis will overwrite the existing My Preset values.')) return;
+    var newPreset=clone(S.settings.presets['user']);
+    FD.forEach(function(fd){
+      if(!fd.offKey) return; // skip inputOnly and isDefault fields
+      // Displayed value: dayOverride if set, else active preset offset, else existing user preset
+      var val;
+      if(S.dayOverrides[fd.k]!==undefined){
+        val=S.dayOverrides[fd.k];
+      } else if(offs&&offs[fd.offKey]!==undefined){
+        val=offs[fd.offKey];
+      } else {
+        return; // no value to capture
+      }
+      newPreset[fd.offKey]=val;
+    });
+    S.settings.presets['user']=newPreset;
+    saveSettings();
+    // Clear day overrides since they're now baked into the preset
+    S.dayOverrides={};
+    // Switch to My Preset mode so the user sees the result
+    S.mode='user';
+    S.overrides={};
+    S.edTrigger='acceptance';
+    render();
+    // Brief visual feedback
+    var btn=document.querySelector('.btn-preset-save-inline');
+    if(btn){ var orig=btn.textContent; btn.textContent='✓ Saved!'; setTimeout(function(){ btn.textContent=orig; },1800); }
+  },
+  updateOff:function(pk,ok,v){ S.settings.presets[pk][ok]=parseInt(v)||0; saveSettings(); render(); },
+  resetPreset:function(pk){
+    var def=pk==='40day'?DEF40:pk==='45day'?DEF45:pk==='60day'?DEF60:DEF_USER;
+    S.settings.presets[pk]=clone(def);
+    saveSettings(); _renderSettings(); render();
+  },
+  exportSettings:function(){
+    var data={version:2,holidays:S.settings.holidays,presets:S.settings.presets};
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob); var a=document.createElement('a');
+    a.href=url; a.download='re-date-calc-settings.json'; a.click(); URL.revokeObjectURL(url);
+  },
+  importSettings:function(inp){
+    var f=inp.files[0]; if(!f)return;
+    var r=new FileReader();
+    r.onload=function(e){
+      try{
+        var d=JSON.parse(e.target.result);
+        if(!confirm('Import settings? This will overwrite your current holidays and presets.'))return;
+        if(d.holidays) S.settings.holidays=d.holidays;
+        if(d.presets){
+          S.settings.presets['40day']=merge(clone(DEF40),d.presets['40day']||{});
+          S.settings.presets['45day']=merge(clone(DEF45),d.presets['45day']||{});
+          S.settings.presets['60day']=merge(clone(DEF60),d.presets['60day']||{});
+          S.settings.presets['user'] =merge(clone(DEF_USER),d.presets['user']||{});
+        }
+        clearHolCache(); saveSettings(); _renderSettings(); render();
+      }catch(err){ alert('Import failed: '+err.message); }
+      inp.value='';
+    };
+    r.readAsText(f);
+  },
+
+  /* ── Transaction Save / Load ── */
+  saveTransaction:function(){
+    var data={
+      _type:'re-transaction',
+      _version:1,
+      propertyName: S.propertyName||'',
+      offerDate:    S.offerDate||null,
+      mode:         S.mode,
+      customClosing:S.customClosing||null,
+      overrides:    clone(S.overrides),
+      ignored:      clone(S.ignored),
+      ignoredSections: clone(S.ignoredSections),
+      includeLoan:  S.includeLoan,
+      edTrigger:    S.edTrigger,
+      ddrAnchor:    S.ddrAnchor
+    };
+    var filename=(S.propertyName||'transaction').replace(/[^a-z0-9]/gi,'-').toLowerCase()+'-dates.json';
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download=filename; a.click();
+    URL.revokeObjectURL(url);
+  },
+  loadTransaction:function(inp){
+    var f=inp.files[0]; if(!f)return;
+    var r=new FileReader();
+    r.onload=function(e){
+      try{
+        var d=JSON.parse(e.target.result);
+        if(d._type!=='re-transaction')
+          throw new Error('This file does not appear to be a transaction save file.');
+        S.propertyName   = d.propertyName||'';
+        S.offerDate      = d.offerDate||null;
+        S.mode           = d.mode||'40day';
+        S.customClosing  = d.customClosing||null;
+        S.overrides      = d.overrides||{};
+        S.ignored        = d.ignored||{};
+        S.ignoredSections= d.ignoredSections||{};
+        S.includeLoan    = (d.includeLoan!==undefined)?d.includeLoan:true;
+        S.edTrigger      = d.edTrigger||'acceptance';
+        S.ddrAnchor      = d.ddrAnchor||'ddObjection';
+        // Clear session-only state that must not bleed across transactions
+        S.dayOverrides   = {};
+        delete S._icActualManualSkip;
+        delete S._icActualManualShow;
+        // Sync property name input if visible
+        var pni=document.getElementById('propertyNameInput');
+        if(pni) pni.value=S.propertyName;
+        render();
+      }catch(err){ alert('Load failed: '+err.message); }
+      inp.value='';
+    };
+    r.readAsText(f);
+  }
+};
+
+/* ============================================================
+   ADD HOLIDAY MODAL
+   Dynamically creates a modal overlay for adding custom holidays.
+   Custom holidays are fixed-date (month + day, repeating annually).
+   Appended to document.body and removed on close.
+   ============================================================ */
+function _showAddHolModal(){
+  var div=document.createElement('div');
+  div.className='modal-overlay'; div.id='addHolModal';
+  div.innerHTML='<div class="modal"><h3>Add Custom Holiday</h3>'
+    +'<div class="modal-field"><label>Holiday Name</label>'
+    +'<input type="text" id="ahn" placeholder="e.g., Christmas Eve"></div>'
+    +'<div class="modal-field"><label>Date (month &amp; day — applies every year)</label>'
+    +'<input type="date" id="ahd"></div>'
+    +'<div class="modal-acts">'
+    +'<button class="btn-sec" onclick="App._closeHolModal()">Cancel</button>'
+    +'<button class="btn-pri" onclick="App._addHol()">Add Holiday</button>'
+    +'</div></div>';
+  document.body.appendChild(div);
+  setTimeout(function(){ var el=document.getElementById('ahn'); if(el)el.focus(); },50);
+  App._closeHolModal=function(){ var el=document.getElementById('addHolModal'); if(el)el.remove(); };
+  App._addHol=function(){
+    var name=(document.getElementById('ahn').value||'').trim();
+    var dv=document.getElementById('ahd').value;
+    if(!name||!dv){ alert('Please enter a name and date.'); return; }
+    var parts=dv.split('-');
+    S.settings.holidays.push({id:'cust_'+Date.now(),name:name,type:'fixed',month:+parts[1],day:+parts[2]});
+    clearHolCache(); saveSettings(); App._closeHolModal(); _renderSettings(); render();
+  };
+}
+
+/* ============================================================
+   HELPERS
+   esc()     — HTML-escapes a string for safe innerHTML insertion
+   _icsEsc() — escapes a string for iCalendar (RFC 5545) SUMMARY/DESCRIPTION
+   clone()   — deep-clones a JSON-serializable object
+   merge()   — shallow-merges object b into a copy of object a
+   ============================================================ */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _icsEsc(s){ return String(s).replace(/\\/g,'\\\\').replace(/,/g,'\\,').replace(/;/g,'\\;').replace(/\n/g,'\\n'); }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function merge(a,b){ var r=clone(a); Object.keys(b).forEach(function(k){ r[k]=b[k]; }); return r; }
+
+/* ============================================================
+   CALENDAR VIEW
+   Renders a multi-month calendar grid derived from calc() output.
+   _buildMilestoneMap() collects all visible milestone dates into a
+   map keyed by YYYY-MM-DD. Each entry can be a solid badge (calculated
+   date) or a ghost badge (effective/rollover date).
+   _renderCalendar() auto-detects the date range and renders only
+   the months that contain milestones (max 12 months).
+   ============================================================ */
+var _calView='detail';
+var GROUP_COLORS={offer:'badge-offer',financing:'badge-financing',dd:'badge-dd',newsurvey:'badge-newsurvey',insurance:'badge-insurance',closing:'badge-closing'};
+
+/** Builds a map of YYYY-MM-DD -> [{num, lbl, groupId, colorCls, isGhost, key}]
+ * for calendar rendering. Skipped/ignored milestones are excluded.
+ * Ghost entries represent effective (rolled-forward) dates. */
+function _buildMilestoneMap(computed){
+  // Returns { 'YYYY-MM-DD': [{num, lbl, groupId, isGhost}] }
+  // Numbers must exactly match the sequential numbers shown in the Detail View:
+  //   - inputOnly and isDefault fields are not numbered (no badge)
+  //   - ALL other fields consume a number regardless of ignored state
+  //     so that numbers stay consistent whether a field is skipped or not
+  var map={};
+  var loanSuppressed=!S.includeLoan;
+  var counter=0;
+
+  function addDay(ymd, entry){
+    if(!map[ymd]) map[ymd]=[];
+    map[ymd].push(entry);
+  }
+
+  GROUPS.forEach(function(grp){
+    var secIgnored=!!S.ignoredSections[grp.id];
+    grp.keys.forEach(function(k){
+      var fd=FD_MAP[k]; if(!fd) return;
+      var isIgnored=secIgnored||(loanSuppressed&&!!fd.loan)||!!S.ignored[k];
+      // Increment counter for every numbered field (matches detail view numbering)
+      // inputOnly and isDefault fields are not numbered in either view
+      if(!fd.inputOnly&&!fd.isDefault) counter++;
+      var num=counter;
+      // Skip ignored fields — no badge on calendar
+      if(isIgnored) return;
+      // Skip fields with no date
+      var date=computed.dates[k]; if(!date) return;
+      var colorCls=GROUP_COLORS[grp.id]||'badge-offer';
+      // Solid badge on Calculated Date
+      addDay(toYMD(date),{num:num,lbl:fd.lbl,groupId:grp.id,colorCls:colorCls,isGhost:false,key:k});
+      // Ghost badge on Effective Date if different (Days Language Rollover)
+      var effDate=computed.effective&&computed.effective[k];
+      if(effDate && toYMD(effDate)!==toYMD(date)){
+        addDay(toYMD(effDate),{num:num,lbl:fd.lbl,groupId:grp.id,colorCls:colorCls,isGhost:true,key:k});
+      }
+    });
+  });
+  return map;
+}
+
+/** Renders the multi-month calendar view into #calContainer.
+ * Auto-detects date range from milestone dates. Attaches tooltip handlers. */
+function _renderCalendar(computed){
+  var milMap=_buildMilestoneMap(computed);
+  if(!Object.keys(milMap).length&&!computed.dates.offerDate){
+    document.getElementById('calContainer').innerHTML='<p style="color:#94a3b8;text-align:center;padding:2rem">Enter an Offer Date to see the calendar view.</p>';
+    return;
+  }
+
+  // Find date range: all milestone dates + offer date
+  var allDates=Object.keys(milMap).map(function(d){return parseYMD(d);});
+  if(computed.dates.offerDate) allDates.push(computed.dates.offerDate);
+  if(!allDates.length){
+    document.getElementById('calContainer').innerHTML='<p style="color:#94a3b8;text-align:center;padding:2rem">No dates to display.</p>';
+    return;
+  }
+  allDates.sort(function(a,b){return a-b;});
+  var minDate=allDates[0], maxDate=allDates[allDates.length-1];
+  var startMonth=new Date(minDate.getFullYear(),minDate.getMonth(),1);
+  var endMonth=new Date(maxDate.getFullYear(),maxDate.getMonth(),1);
+
+  var today=new Date(); today=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  var todayYMD=toYMD(today);
+
+  var monthsHtml='<div class="cal-months">';
+  var cur=new Date(startMonth);
+  var monthCount=0;
+  while(cur<=endMonth && monthCount<12){
+    monthsHtml+=_renderMonth(cur,milMap,todayYMD,computed);
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+    monthCount++;
+  }
+  monthsHtml+='</div>';
+
+  // Legend
+  var legendHtml='<div class="cal-legend">';
+  var groups=[
+    {id:'offer',lbl:'Offer & Acceptance',cls:'badge-offer'},
+    {id:'financing',lbl:'Financials',cls:'badge-financing'},
+    {id:'dd',lbl:'Due Diligence',cls:'badge-dd'},
+    {id:'newsurvey',lbl:'New Survey',cls:'badge-newsurvey'},
+    {id:'insurance',lbl:'Insurance',cls:'badge-insurance'},
+    {id:'closing',lbl:'Closing',cls:'badge-closing'},
+  ];
+  groups.forEach(function(g){
+    legendHtml+='<div class="cal-legend-item"><div class="cal-legend-swatch '+g.cls+'"></div>'+esc(g.lbl)+'</div>';
+  });
+  legendHtml+='<div class="cal-legend-item"><div class="cal-legend-swatch badge-offer" style="opacity:.38"></div>Days Language Rollover</div>';
+  legendHtml+='<div class="cal-legend-item" style="margin-left:auto"><span style="display:inline-block;width:12px;height:12px;background:#f1f5f9;border-radius:2px;margin-right:.3rem"></span>Weekend</div>';
+  legendHtml+='<div class="cal-legend-item"><span style="display:inline-block;width:12px;height:12px;background:#fefce8;border-radius:2px;margin-right:.3rem"></span>Holiday</div>';
+  legendHtml+='</div>';
+
+  // ── Numbered milestone legend ──
+  var calLoanSuppressed=!S.includeLoan;
+  var calCounter=0; var calLegRows='';
+  GROUPS.forEach(function(grp){
+    var secIgnored=!!S.ignoredSections[grp.id];
+    var grpColor=({'offer':'#1d4ed8','financing':'#0d9488','dd':'#ea580c','newsurvey':'#6d28d9','insurance':'#0891b2','closing':'#b91c1c'}[grp.id])||'#0f172a';
+    var grpItems='';
+    grp.keys.forEach(function(k){
+      var fd=FD_MAP[k]; if(!fd) return;
+      var isIgnored=secIgnored||(calLoanSuppressed&&!!fd.loan)||!!S.ignored[k];
+      if(!fd.inputOnly&&!fd.isDefault) calCounter++;
+      var num=calCounter;
+      if(isIgnored) return;
+      var date=computed.dates[k]; if(!date) return;
+      var eff=computed.effective&&computed.effective[k];
+      var effStr=(eff&&toYMD(eff)!==toYMD(date))?(' <span style="color:#7c3aed;font-size:.58rem">&#x2192; '+esc(fmtShort(eff))+'</span>'):'';
+      grpItems+='<div class="cal-legend-ms-row">'
+        +'<span class="cal-badge '+('offer'===grp.id?'badge-offer':'financing'===grp.id?'badge-financing':'dd'===grp.id?'badge-dd':'newsurvey'===grp.id?'badge-newsurvey':'insurance'===grp.id?'badge-insurance':'badge-closing')+'" style="width:20px;height:20px;font-size:.58rem;flex-shrink:0">'+num+'</span>'
+        +'<span class="cal-legend-ms-name">'+esc(fd.lbl.replace(/ \(\d+\..*?\)/,''))+'</span>'
+        +'<span class="cal-legend-ms-date">'+esc(fmtShort(date))+effStr+'</span>'
+        +'</div>';
+    });
+    if(grpItems){
+      calLegRows+='<div class="cal-legend-ms-group">'
+        +'<div class="cal-legend-ms-title" style="color:'+grpColor+'">'+esc(grp.lbl.toUpperCase())+'</div>'
+        +grpItems+'</div>';
+    }
+  });
+  if(calLegRows) legendHtml+='<div class="cal-legend-ms">'+calLegRows+'</div>';
+
+  document.getElementById('calContainer').innerHTML=monthsHtml+legendHtml;
+
+  // Unified tooltip handler for calendar badges and timeline dots
+  document.getElementById('calContainer').addEventListener('mousemove',function(e){
+    var badge=e.target.closest('.cal-badge,.cal-badge-ghost,.tl-dot,.tl-dot-ghost');
+    if(!badge){document.getElementById('calTooltip').style.display='none';return;}
+    var tip=document.getElementById('calTooltip');
+    var isGhost=badge.classList.contains('cal-badge-ghost')||badge.classList.contains('tl-dot-ghost');
+    var dateStr=badge.dataset.date?('<br><span style="color:#94a3b8;font-size:.72rem">'+badge.dataset.date+'</span>'):'';
+    tip.innerHTML=(isGhost?'<em style="color:#94a3b8;font-size:.7rem">Days Language Rollover</em><br>':'')+esc(badge.dataset.lbl||'')+dateStr;
+    tip.style.display='block';
+    tip.style.left=(e.clientX+12)+'px';
+    tip.style.top=(e.clientY-8)+'px';
+  });
+  document.getElementById('calContainer').addEventListener('mouseleave',function(){
+    document.getElementById('calTooltip').style.display='none';
+  });
+}
+
+/** Renders the Transaction Story Timeline into #timelineContainer. */
+function _renderTimelineView(computed){
+  var tEl=document.getElementById('timelineContainer');
+  if(!tEl) return;
+  if(!computed.dates.offerDate){
+    tEl.innerHTML='<p style="color:#94a3b8;text-align:center;padding:2rem">Enter an Offer Date to see the timeline.</p>';
+    return;
+  }
+  var allDates=[];
+  GROUPS.forEach(function(grp){
+    grp.keys.forEach(function(k){
+      var d=computed.dates[k]; if(d) allDates.push(d);
+    });
+  });
+  if(!allDates.length){ tEl.innerHTML='<p style="color:#94a3b8;text-align:center;padding:2rem">No dates to display.</p>'; return; }
+  allDates.sort(function(a,b){return a-b;});
+  tEl.innerHTML='<div style="padding:.5rem 0">'+_renderTimeline(computed,allDates[0],allDates[allDates.length-1])+'</div>';
+}
+
+/** Renders a single month grid with milestone badges.
+ * Pads start/end with adjacent-month day numbers. */
+function _renderMonth(monthDate, milMap, todayYMD, computed){
+  var y=monthDate.getFullYear(), m=monthDate.getMonth();
+  var MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var html='<div class="cal-month"><div class="cal-month-title">'+MONTH_NAMES[m]+' '+y+'</div><div class="cal-grid">';
+  var DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  DOW.forEach(function(d){ html+='<div class="cal-dow">'+d+'</div>'; });
+
+  var firstDay=new Date(y,m,1).getDay();
+  var daysInMonth=new Date(y,m+1,0).getDate();
+
+  // Pad start
+  for(var i=0;i<firstDay;i++){
+    var prevDate=new Date(y,m,1-firstDay+i);
+    html+='<div class="cal-day other-month"><div class="cal-day-num">'+prevDate.getDate()+'</div></div>';
+  }
+
+  for(var d=1;d<=daysInMonth;d++){
+    var dayDate=new Date(y,m,d);
+    var ymd=toYMD(dayDate);
+    var wd=dayDate.getDay();
+    var isWknd=wd===0||wd===6;
+    var holName=getHolName(dayDate);
+    var entries=milMap[ymd]||[];
+    var cls='cal-day';
+    if(isWknd) cls+=' weekend';
+    if(holName) cls+=' holiday';
+    if(ymd===todayYMD) cls+=' today';
+    if(entries.length) cls+=' has-milestone';
+
+    html+='<div class="'+cls+'" title="'+(holName?esc(holName):'')+'"><div class="cal-day-num">'+d+'</div>';
+    if(entries.length){
+      html+='<div class="cal-badges">';
+      entries.forEach(function(e){
+        if(e.isGhost){
+          html+='<div class="cal-badge-ghost" data-lbl="'+esc(e.lbl)+'" data-key="'+e.key+'">'+e.num+'</div>';
+        } else {
+          html+='<div class="cal-badge '+e.colorCls+'" data-lbl="'+esc(e.lbl)+'" data-key="'+e.key+'">'+e.num+'</div>';
+        }
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  }
+
+  // Pad end
+  var lastDay=new Date(y,m,daysInMonth).getDay();
+  if(lastDay<6){
+    for(var j=lastDay+1;j<=6;j++){
+      var nextDate=new Date(y,m+1,j-lastDay);
+      html+='<div class="cal-day other-month"><div class="cal-day-num">'+nextDate.getDate()+'</div></div>';
+    }
+  }
+  html+='</div></div>';
+  return html;
+}
+
+/* ============================================================
+   HELP VIEW
+   Help content lives in <template id="helpTpl"> in the HTML.
+   _renderHelp() copies it into #helpContainer and wires the
+   scroll-spy for the sidebar navigation.
+   ============================================================ */
+
+/** Renders the help documentation from the #helpTpl template element. */
+function _renderHelp(){
+  var tpl=document.getElementById('helpTpl');
+  if(!tpl) return;
+  document.getElementById('helpContainer').innerHTML=tpl.innerHTML;
+  // Scroll-spy: highlight active nav link as user scrolls
+  var helpPane=document.getElementById('paneHelp');
+  if(!helpPane._scrollListenerAdded){
+    helpPane._scrollListenerAdded=true;
+    helpPane.addEventListener('scroll',function(){
+      var links=document.querySelectorAll('.help-nav-sidebar a');
+      var scrollY=helpPane.scrollTop+120;
+      var active=null;
+      links.forEach(function(a){
+        var id=a.getAttribute('data-sec');
+        var el=document.getElementById('help-'+id);
+        if(el&&el.offsetTop<=scrollY) active=a;
+      });
+      links.forEach(function(a){ a.classList.remove('active'); });
+      if(active) active.classList.add('active');
+    },{passive:true});
+  }
+}
+
+/** Scrolls the help pane to a section by id. */
+App._helpScroll=function(id){
+  var el=document.getElementById('help-'+id);
+  var pane=document.getElementById('paneHelp');
+  if(el&&pane) pane.scrollTo({top:el.offsetTop-16,behavior:'smooth'});
+};
+
+
+/* ============================================================
+   TRANSACTION STORY TIMELINE
+   A single-river, chapter-based visual timeline.
+   Key concepts:
+     chapter bands: colored arcs per group spanning their window
+     alternating markers: milestones alternate above/below axis
+     urgency zones: amber/red tint near closing
+     anchor pills: Offer, Acceptance, Closing labeled on axis
+   ============================================================ */
+
+/** Shared data builder used by both HTML and PDF renderers. */
+function _buildTimelineData(computed){
+  var loanSuppressed=!S.includeLoan;
+  var GROUP_META=[
+    {id:'offer',    lbl:'Offer & Acceptance',color:'#1d4ed8',rgb:[29,78,216]},
+    {id:'financing',lbl:'Financials',        color:'#0d9488',rgb:[13,148,136]},
+    {id:'dd',       lbl:'Due Diligence',     color:'#ea580c',rgb:[234,88,12]},
+    {id:'newsurvey',lbl:'New Survey',        color:'#6d28d9',rgb:[109,40,217]},
+    {id:'insurance',lbl:'Insurance',         color:'#0891b2',rgb:[8,145,178]},
+    {id:'closing',  lbl:'Closing',           color:'#b91c1c',rgb:[185,28,28]},
+  ];
+  var allItems=[], counter=0;
+  GROUPS.forEach(function(grp){
+    var meta=GROUP_META.filter(function(g){return g.id===grp.id;})[0];
+    if(!meta) return;
+    var secIgnored=!!S.ignoredSections[grp.id];
+    grp.keys.forEach(function(k){
+      var fd=FD_MAP[k]; if(!fd) return;
+      var isIgnored=secIgnored||(loanSuppressed&&!!fd.loan)||!!S.ignored[k];
+      if(!fd.inputOnly&&!fd.isDefault) counter++;
+      var num=counter;
+      if(isIgnored) return;
+      var date=computed.dates[k]; if(!date) return;
+      var eff=computed.effective&&computed.effective[k];
+      allItems.push({
+        num:num, lbl:fd.lbl, key:k, date:date,
+        color:meta.color, rgb:meta.rgb, groupId:grp.id,
+        effDate:(eff&&toYMD(eff)!==toYMD(date))?eff:null,
+        isClose:(k==='closingDate')
+      });
+    });
+  });
+  if(!allItems.length) return null;
+  allItems.sort(function(a,b){return a.date-b.date;});
+
+  var offerDate  = computed.dates.offerDate;
+  var closeDate  = computed.dates.closingDate;
+  var acc        = computed.dates.acceptanceDate;
+  var tlStart    = offerDate ? addDays(offerDate,-2) : addDays(allItems[0].date,-2);
+  var tlEnd      = closeDate ? addDays(closeDate, 3) : addDays(allItems[allItems.length-1].date,3);
+  var totalDays  = Math.max(diffDays(tlStart,tlEnd),1);
+  function pct(d){ return Math.max(0,Math.min(100,(diffDays(tlStart,d)/totalDays)*100)); }
+
+  // Chapter spans (min→max date per active group)
+  var chapterSpans=[];
+  GROUP_META.forEach(function(meta){
+    var gItems=allItems.filter(function(i){return i.groupId===meta.id;});
+    if(!gItems.length) return;
+    var dates=gItems.map(function(i){return i.date;});
+    var mn=dates.reduce(function(a,b){return a<b?a:b;});
+    var mx=dates.reduce(function(a,b){return a>b?a:b;});
+    chapterSpans.push({meta:meta,left:pct(mn),right:pct(mx)});
+  });
+
+  // Grid lines
+  var useWeeks=(totalDays>=21);
+  var gridLines=[];
+  var MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var gs=new Date(tlStart);
+  if(useWeeks){while(gs.getDay()!==1) gs=addDays(gs,1);}
+  while(gs<=tlEnd){
+    var isM=(gs.getDate()===1);
+    gridLines.push({pct:pct(gs),isMonth:isM,
+      label:isM?(MNAMES[gs.getMonth()]+' '+gs.getFullYear()):String(gs.getDate())});
+    gs=addDays(gs,useWeeks?7:1);
+  }
+
+  // Urgency zones
+  var urgencyZones=[];
+  if(closeDate){
+    urgencyZones.push({left:pct(addDays(closeDate,-7)),right:pct(closeDate),color:'rgba(251,191,36,.10)'});
+    urgencyZones.push({left:pct(addDays(closeDate,-3)),right:pct(closeDate),color:'rgba(239,68,68,.09)'});
+  }
+
+  // Anchor labels
+  var anchors=[];
+  if(offerDate) anchors.push({pct:pct(offerDate),lbl:'Offer'});
+  if(acc&&acc!==offerDate) anchors.push({pct:pct(acc),lbl:'Acceptance'});
+  if(closeDate) anchors.push({pct:pct(closeDate),lbl:'Closing'});
+
+  return {items:allItems,chapterSpans:chapterSpans,gridLines:gridLines,
+          urgencyZones:urgencyZones,anchors:anchors,pct:pct,
+          GROUP_META:GROUP_META,useWeeks:useWeeks};
+}
+
+/** Renders the Transaction Story Timeline. */
+function _renderTimeline(computed, minDate, maxDate){
+  var td = _buildTimelineData(computed);
+  if(!td) return '';
+  var pct = td.pct;
+  var loanSuppressed = !S.includeLoan;
+
+  // ── Build per-group milestone lists ──
+  var groupItems = {};
+  td.GROUP_META.forEach(function(g){ groupItems[g.id] = []; });
+  var counter = 0;
+  GROUPS.forEach(function(grp){
+    var secIgnored = !!S.ignoredSections[grp.id];
+    grp.keys.forEach(function(k){
+      var fd = FD_MAP[k]; if(!fd) return;
+      var isIgnored = secIgnored||(loanSuppressed&&!!fd.loan)||!!S.ignored[k];
+      if(!fd.inputOnly&&!fd.isDefault) counter++;
+      var num = counter;
+      if(isIgnored) return;
+      var date = computed.dates[k]; if(!date) return;
+      var eff = computed.effective&&computed.effective[k];
+      if(groupItems[grp.id])
+        groupItems[grp.id].push({num:num,lbl:fd.lbl,key:k,date:date,
+          effDate:(eff&&toYMD(eff)!==toYMD(date))?eff:null});
+    });
+  });
+
+  // ── Tier assignment (greedy left-to-right collision avoidance) ──
+  var COLLISION_PCT = 3.5;
+  function assignTiers(items){
+    if(!items.length) return {items:items,tiers:1};
+    var sorted = items.slice().sort(function(a,b){return a.date-b.date;});
+    var tierEnds = [];
+    sorted.forEach(function(item){
+      var p = pct(item.date); var placed=false;
+      for(var t=0;t<tierEnds.length;t++){
+        if(p-tierEnds[t]>=COLLISION_PCT){ item.tier=t; tierEnds[t]=p; placed=true; break; }
+      }
+      if(!placed){ item.tier=tierEnds.length; tierEnds.push(p); }
+    });
+    return {items:items,tiers:tierEnds.length};
+  }
+
+  // ── Shared grid HTML ──
+  function gridHtml(){
+    var s='';
+    td.gridLines.forEach(function(gl){
+      s+='<div class="tl-grid-line" style="left:'+gl.pct+'%;background:'
+        +(gl.isMonth?'#d1d5db':'#f1f5f9')+';opacity:'+(gl.isMonth?'.6':'.35')+'"></div>';
+    });
+    td.urgencyZones.forEach(function(uz){
+      s+='<div class="tl-urgency-zone" style="left:'+uz.left+'%;right:'+(100-uz.right)+'%;background:'+uz.color+'"></div>';
+    });
+    return s;
+  }
+
+  var DOT_D  = 30;
+  var PAD    = 8;
+  var TIER_H = DOT_D + PAD*2;  // 46px per tier
+
+  var h = '<div class="cal-timeline">';
+  h += '<div class="cal-timeline-title">Transaction Story</div>';
+  h += '<div class="cal-timeline-sub">One row per group \u2014 numbers match the Detail View. Hover any dot for details.</div>';
+  h += '<div class="tl-canvas">';
+
+  // ── Anchor header — label column spacer + track-relative anchor pills ──
+  h += '<div class="tl-row" style="margin-bottom:4px;height:26px">';
+  h += '<div class="tl-row-label"></div>';  // spacer matching lane label width
+  h += '<div style="flex:1;position:relative;height:26px">';
+  td.anchors.forEach(function(a){
+    var lineColor = a.lbl==='Closing'?'#b91c1c':(a.lbl==='Acceptance'?'#0d9488':'#1d4ed8');
+    h += '<div style="position:absolute;left:'+a.pct+'%;top:0;bottom:0;width:1.5px;background:'+lineColor+';opacity:.3;transform:translateX(-50%)"></div>';
+    h += '<div style="position:absolute;left:'+a.pct+'%;top:3px;transform:translateX(-50%);background:'+lineColor
+       + ';color:white;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;z-index:4;box-shadow:0 1px 3px rgba(0,0,0,.15)">'
+       + esc(a.lbl)+'</div>';
+  });
+  h += '</div>';
+  h += '</div>';
+
+  // ── Swim lanes ──
+  td.GROUP_META.forEach(function(meta){
+    var rawItems = groupItems[meta.id];
+    if(!rawItems||!rawItems.length) return;
+    var result = assignTiers(rawItems);
+    var tiers = result.tiers;
+    var laneH = tiers * TIER_H;
+
+    h += '<div class="tl-row" style="margin-bottom:3px">';
+    h += '<div class="tl-row-label">';
+    h += '<div class="tl-row-label-pill" style="background:'+meta.color+'">'+esc(meta.lbl)+'</div>';
+    h += '</div>';
+    h += '<div class="tl-row-track" style="height:'+laneH+'px">';
+    h += gridHtml();
+
+    // Axis line per tier
+    for(var t=0;t<tiers;t++){
+      var ay = t*TIER_H + PAD + DOT_D/2;
+      h += '<div style="position:absolute;left:0;right:0;top:'+ay+'px;height:'+(t===0?'1.5':'1')+'px;background:'+(t===0?'#e2e8f0':'#f1f5f9')+';z-index:0"></div>';
+    }
+
+    // Anchor drop lines through the lane
+    td.anchors.forEach(function(a){
+      var lineColor = a.lbl==='Closing'?'#b91c1c':(a.lbl==='Acceptance'?'#0d9488':'#1d4ed8');
+      h += '<div style="position:absolute;left:'+a.pct+'%;top:0;bottom:0;width:1.5px;background:'+lineColor+';opacity:.2;transform:translateX(-50%);z-index:1"></div>';
+    });
+
+    // Dots
+    rawItems.forEach(function(item){
+      var p  = pct(item.date);
+      var ty = (item.tier||0)*TIER_H + PAD;
+      var dateStr = fmtShort(item.date);
+      h += '<div class="tl-mk" style="left:'+p+'%;top:'+ty+'px"';
+      h += ' onmouseenter="App._tlTip(event,\''+esc(item.lbl)+'\',\''+esc(dateStr)+'\',0)"';
+      h += ' onmouseleave="App._tlTipHide()">';
+      h += '<div class="tl-mk-dot" style="background:'+meta.color+'">'+item.num+'</div>';
+      h += '</div>';
+      if(item.effDate){
+        var ep=pct(item.effDate); var effStr=fmtShort(item.effDate);
+        h += '<div class="tl-mk" style="left:'+ep+'%;top:'+ty+'px"';
+        h += ' onmouseenter="App._tlTip(event,\''+esc(item.lbl)+' \u2014 Rollover\',\''+esc(effStr)+'\',1)"';
+        h += ' onmouseleave="App._tlTipHide()">';
+        h += '<div class="tl-mk-dot ghost" style="background:'+meta.color+'">'+item.num+'</div>';
+        h += '</div>';
+      }
+    });
+
+    h += '</div>';  // tl-row-track
+    h += '</div>';  // tl-row
+  });
+
+  // ── X-axis tick labels ──
+  h += '<div class="tl-axis-bar"></div>';
+  h += '<div class="tl-axis-labels">';
+  td.gridLines.forEach(function(gl){
+    if(gl.isMonth||td.useWeeks)
+      h += '<div class="tl-axis-label" style="left:'+gl.pct+'%;color:'
+        +(gl.isMonth?'#475569':'#94a3b8')+';font-weight:'+(gl.isMonth?'700':'400')+'">'+esc(gl.label)+'</div>';
+  });
+  h += '</div>';
+
+  // ── Numbered legend ──
+  h += '<div class="tl-legend">';
+  td.GROUP_META.forEach(function(meta){
+    var items2=groupItems[meta.id];
+    if(!items2||!items2.length) return;
+    h += '<div class="tl-legend-group">';
+    h += '<div class="tl-legend-group-title" style="color:'+meta.color+'">'+esc(meta.lbl)+'</div>';
+    items2.forEach(function(item){
+      var dateStr=fmtShort(item.date);
+      var effStr=item.effDate?(' \u2192 '+fmtShort(item.effDate)):'';
+      h += '<div class="tl-legend-row">';
+      h += '<span class="tl-legend-num" style="background:'+meta.color+'">'+item.num+'</span>';
+      h += '<span class="tl-legend-name">'+esc(item.lbl.replace(/ \(\d+\..*?\)/,''))+'</span>';
+      h += '<span class="tl-legend-date">'+esc(dateStr)+esc(effStr)+'</span>';
+      h += '</div>';
+    });
+    h += '</div>';
+  });
+  h += '</div>';
+
+  h += '</div>';  // tl-canvas
+  h += '</div>';  // cal-timeline
+  return h;
+}
+
+
+
+
+
+
+
+
+
+
+/* ============================================================
+   PDF EXPORT MODULE
+   Programmatic PDF generation using jsPDF + AutoTable.
+   Three separate PDFs, one per view:
+     • Detail View  — milestone table grouped by section
+     • Calendar View — multi-month grid (one page) + timeline (second page)
+     • Help View    — full documentation
+   All colors match the UI palette exactly.
+   ============================================================ */
+
+/* ── Shared palette (matches UI group header colors) ── */
+var PDF_COLORS = {
+  offer:     [29,  78,  216],   // #1d4ed8 blue
+  financing: [13,  148, 136],   // #0d9488 teal
+  dd:        [234, 88,  12 ],   // #ea580c orange
+  newsurvey: [109, 40,  217],   // #6d28d9 purple
+  insurance: [8,   145, 178],   // #0891b2 cyan
+  closing:   [185, 28,  28 ],   // #b91c1c red
+  text:      [15,  23,  42 ],   // #0f172a near-black
+  subtext:   [71,  85,  105],   // #475569 slate
+  muted:     [148, 163, 184],   // #94a3b8 light slate
+  border:    [226, 232, 240],   // #e2e8f0 light gray
+  effective: [6,   182, 212],   // #06b6d4 cyan for effective dates
+  weekend:   [241, 245, 249],   // #f1f5f9 weekend bg
+  holiday:   [254, 252, 232],   // #fefce8 holiday bg
+  today:     [59,  130, 246],   // #3b82f6 blue today
+  white:     [255, 255, 255],
+  pagebg:    [248, 250, 252],   // #f8fafc very light page bg
+};
+
+/** Returns the RGB color array for a group id */
+function _pdfGroupColor(groupId){
+  return PDF_COLORS[groupId] || PDF_COLORS.text;
+}
+
+/** Formats a Date as "Monday, January 1, 2025" */
+function _pdfFmtLong(d){
+  if(!d) return '—';
+  var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return days[d.getDay()]+', '+months[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+}
+
+/** Formats a Date as "Mon Jan 1" */
+function _pdfFmtShort(d){
+  if(!d) return '—';
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return days[d.getDay()]+' '+months[d.getMonth()]+' '+d.getDate();
+}
+
+/** Draws the standard page header used on every PDF page */
+function _pdfPageHeader(doc, title, subtitle, pageW){
+  // Solid dark header bar
+  doc.setFillColor.apply(doc, PDF_COLORS.text);
+  doc.rect(0, 0, pageW, 20, 'F');
+  // Accent rule — 3px blue line at bottom of header
+  doc.setFillColor.apply(doc, PDF_COLORS.today);
+  doc.rect(0, 19, pageW, 1, 'F');
+  // Title — large, white, bold
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.setTextColor(255,255,255);
+  doc.text(title, 14, 13.5);
+  // Subtitle right-aligned
+  if(subtitle){
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(160,175,200);
+    doc.text(subtitle, pageW - 14, 13.5, {align:'right'});
+  }
+  doc.setTextColor.apply(doc, PDF_COLORS.text);
+}
+
+/** Draws a footer with page number and timestamp */
+function _pdfPageFooter(doc, pageNum, totalPages, pageW, pageH){
+  // Light rule above footer
+  doc.setDrawColor.apply(doc, PDF_COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.line(14, pageH - 12, pageW - 14, pageH - 12);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor.apply(doc, PDF_COLORS.muted);
+  var now = new Date();
+  var ts = now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+           + '  ' + now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  doc.text('RE Transaction Date Calculator', 14, pageH - 7);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor.apply(doc, PDF_COLORS.subtext);
+  doc.text('Page ' + pageNum + ' of ' + totalPages, pageW/2, pageH - 7, {align:'center'});
+  doc.setFont('helvetica','normal');
+  doc.setTextColor.apply(doc, PDF_COLORS.muted);
+  doc.text(ts, pageW - 14, pageH - 7, {align:'right'});
+}
+
+/** Returns property name + offer date subtitle string */
+function _pdfSubtitle(computed){
+  var parts = [];
+  if(S.propertyName) parts.push(S.propertyName);
+  if(computed.dates.offerDate) parts.push('Offer: ' + _pdfFmtShort(computed.dates.offerDate));
+  if(computed.dates.acceptanceDate && computed.dates.acceptanceDate !== computed.dates.offerDate)
+    parts.push('Acceptance: ' + _pdfFmtShort(computed.dates.acceptanceDate));
+  return parts.join('   |   ');
+}
+
+/* ================================================================
+   DETAIL VIEW PDF
+   ================================================================ */
+function _pdfDetail(){
+  var computed = calc();
+  var loanSuppressed = !S.includeLoan;
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'letter' });
+  var pageW = doc.internal.pageSize.getWidth();   // 215.9mm
+  var pageH = doc.internal.pageSize.getHeight();  // 279.4mm
+  var margin = 14;
+  var contentW = pageW - margin * 2;              // 187.9mm
+
+  // Text-only group section labels (jsPDF built-in fonts don't support emoji)
+  var GRP_LABELS = {
+    offer:'OFFER & ACCEPTANCE', financing:'FINANCIALS', dd:'DUE DILIGENCE',
+    newsurvey:'NEW SURVEY', insurance:'INSURANCE', closing:'CLOSING'
+  };
+
+  var subtitle = _pdfSubtitle(computed);
+
+  // Collect all rows grouped by section
+  var allRows = [];
+  var milCounter = 0;
+
+  GROUPS.forEach(function(grp){
+    var secIgnored = !!S.ignoredSections[grp.id];
+    var groupColor = _pdfGroupColor(grp.id);
+    var groupRows = [];
+
+    grp.keys.forEach(function(k){
+      var fd = FD_MAP[k]; if(!fd) return;
+      var isIgnored = secIgnored || (loanSuppressed && !!fd.loan) || !!S.ignored[k];
+      if(!fd.inputOnly && !fd.isDefault) milCounter++;
+      if(isIgnored) return;
+      var num = (!fd.inputOnly && !fd.isDefault) ? milCounter : '';
+
+      var date    = computed.dates[k];
+      var effDate = computed.effective && computed.effective[k];
+      var hasEff  = effDate && toYMD(effDate) !== toYMD(date);
+
+      // Anchor label — plain text only
+      var anchLbl = fd.anchLbl || '';
+      if(k === 'existingDocDelivery')
+        anchLbl = S.edTrigger === 'icActual' ? 'IC Actual' : 'Acceptance';
+      if(k === 'dueDiligenceResolution'){
+        var ddrMap = {
+          acceptanceDate:'Acceptance',  ddObjection:'DD Objection',
+          offerExpiration:'Offer Expiration', earnestMoneyDue:'Earnest Money',
+          icDue:'IC Delivery', icActual:'IC Actual', loanApplication:'Loan Application',
+          appraisalOrder:'Appraisal Order', titleCommitment:'Title Commitment',
+          existingDocDelivery:'Existing Doc Delivery', existingSurveyDelivery:'Existing Survey',
+          sellerInspectionOrder:'Seller Insp. Order', sellerInspectionDelivery:'Seller Insp. Delivery',
+          dueDiligenceObjection:'DD Objection'
+        };
+        anchLbl = ddrMap[S.ddrAnchor] || 'DD Objection';
+      }
+      if(fd.isDefault) anchLbl = fd.defLbl || '';
+      if(fd.inputOnly) anchLbl = 'User Input';
+
+      // Days offset
+      var daysVal = '';
+      var offs = getOffsets();
+      if(!fd.inputOnly && !fd.isDefault && offs){
+        var dv = S.dayOverrides[k] !== undefined ? S.dayOverrides[k] : offs[k];
+        if(dv !== undefined) daysVal = (dv >= 0 ? '+' : '') + dv;
+      }
+
+      // Date strings — plain ASCII, no special chars
+      var dateStr = date ? _pdfFmtLong(date) : '--';
+      var effStr  = hasEff ? ('Effective: ' + _pdfFmtShort(effDate)) : '';
+      var isWkdHol = !!(date && isWeekendOrHol(date));
+
+      groupRows.push({
+        num: num ? (num + '.') : '',
+        name: fd.lbl,
+        anchor: anchLbl,
+        days: daysVal,
+        date: dateStr,
+        eff: effStr,
+        isWkdHol: isWkdHol,
+        inputOnly: !!fd.inputOnly,
+        groupId: grp.id,
+        groupColor: groupColor,
+      });
+    });
+
+    if(groupRows.length){
+      allRows.push({ type:'header', label: GRP_LABELS[grp.id] || grp.lbl.toUpperCase(),
+                     color: groupColor });
+      groupRows.forEach(function(r){ allRows.push({ type:'row', row:r }); });
+    }
+  });
+
+  // ── Build autoTable body ──
+  var body = [];
+
+  allRows.forEach(function(item){
+    if(item.type === 'header'){
+      // Section header row — spans all 5 columns, colored background, uppercase label
+      body.push([{
+        content: item.label,
+        colSpan: 5,
+        styles:{
+          fillColor: item.color,
+          textColor: [255,255,255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          font: 'helvetica',
+          cellPadding: { top:3.5, bottom:3.5, left:5, right:4 },
+          letterSpacing: 0.5,
+        }
+      }]);
+    } else {
+      var r = item.row;
+
+      // Date cell: main date on first line, effective date in muted style below
+      var dateContent = r.date;
+      if(r.eff) dateContent += '\n' + r.eff;
+
+      body.push([
+        // # column
+        { content: r.num,
+          styles:{ halign:'center', fontSize:8, fontStyle:'bold',
+                   textColor: r.num ? r.groupColor : PDF_COLORS.muted }
+        },
+        // Milestone name
+        { content: r.name,
+          styles:{ fontStyle: r.inputOnly ? 'italic' : 'normal', fontSize:8.5,
+                   textColor: PDF_COLORS.text }
+        },
+        // Anchor
+        { content: r.anchor,
+          styles:{ fontSize:7.5, textColor: PDF_COLORS.subtext }
+        },
+        // Days
+        { content: r.days,
+          styles:{ halign:'center', fontSize:8, fontStyle:'bold',
+                   textColor: r.days ? r.groupColor : PDF_COLORS.muted }
+        },
+        // Calculated date + effective
+        { content: dateContent,
+          styles:{
+            fontSize: 8.5,
+            textColor: r.isWkdHol ? [180,80,0] : PDF_COLORS.text,
+            fontStyle: r.isWkdHol ? 'bold' : 'normal',
+            cellPadding: { top:2, bottom:2, left:3, right:3 },
+          }
+        },
+      ]);
+    }
+  });
+
+  // ── Render table ──
+  doc.autoTable({
+    head: [[
+      { content:'#',         styles:{ halign:'center', cellWidth:12 } },
+      { content:'Milestone', styles:{ cellWidth:68 } },
+      { content:'Anchor',    styles:{ cellWidth:36 } },
+      { content:'Days',      styles:{ halign:'center', cellWidth:16 } },
+      { content:'Calculated Date' },
+    ]],
+    body: body,
+    startY: 24,
+    margin: { left: margin, right: margin },
+    tableWidth: contentW,
+    styles:{
+      font: 'helvetica',
+      fontSize: 8.5,
+      cellPadding: { top:2.5, bottom:2.5, left:3, right:3 },
+      overflow: 'linebreak',
+      lineColor: PDF_COLORS.border,
+      lineWidth: 0.2,
+      valign: 'middle',
+    },
+    headStyles:{
+      fillColor: PDF_COLORS.text,
+      textColor: [255,255,255],
+      fontStyle: 'bold',
+      fontSize: 8,
+      cellPadding: { top:3.5, bottom:3.5, left:3, right:3 },
+    },
+    alternateRowStyles:{ fillColor:[248,250,252] },
+    columnStyles:{
+      0: { cellWidth:12, halign:'center' },
+      1: { cellWidth:68 },
+      2: { cellWidth:36 },
+      3: { cellWidth:16, halign:'center' },
+      4: { cellWidth:'auto' },
+    },
+    // Draw header and footer on every page
+    didDrawPage: function(data){
+      _pdfPageHeader(doc, 'Transaction Milestones', subtitle, pageW);
+    },
+  });
+
+  // Stamp correct total page count on every page after table finishes
+  var totalPages = doc.internal.getNumberOfPages();
+  for(var p = 1; p <= totalPages; p++){
+    doc.setPage(p);
+    _pdfPageFooter(doc, p, totalPages, pageW, pageH);
+  }
+
+  var fn = (S.propertyName||'transaction').replace(/[^a-z0-9]/gi,'-').toLowerCase();
+  doc.save(fn + '-milestones.pdf');
+}
+
+
+/* ================================================================
+   CALENDAR + TIMELINE PDF
+   Page 1: Multi-month calendar grid
+   Page 2: Timeline badge chart
+   ================================================================ */
+function _pdfCalendar(){
+  var computed = calc();
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'letter' });
+  var pageW = doc.internal.pageSize.getWidth();
+  var pageH = doc.internal.pageSize.getHeight();
+  var margin = 14;
+  var subtitle = _pdfSubtitle(computed);
+  var MNAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var DOW = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  var milMap = _buildMilestoneMap(computed);
+  var allDates = Object.keys(milMap).map(function(d){ return parseYMD(d); });
+  if(computed.dates.offerDate) allDates.push(computed.dates.offerDate);
+  if(!allDates.length){ alert('No dates to export.'); return; }
+  allDates.sort(function(a,b){ return a - b; });
+  var minDate = allDates[0], maxDate = allDates[allDates.length-1];
+  var startMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+  var endMonth   = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+  // Collect months to render (max 4 on landscape letter)
+  var months = [];
+  var cur = new Date(startMonth);
+  while(cur <= endMonth && months.length < 6){
+    months.push(new Date(cur));
+    cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+  }
+
+  // ── PAGE 1: Calendar grid ──
+  _pdfPageHeader(doc, 'Transaction Calendar', subtitle, pageW);
+
+  var today = new Date(); today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  var todayYMD = toYMD(today);
+
+  // Layout: up to 3 columns of months
+  var cols = Math.min(months.length, 3);
+  var rows = Math.ceil(months.length / cols);
+  var calAreaTop = 22;
+  var calAreaH = pageH - calAreaTop - 14;
+  var calAreaW = pageW - margin * 2;
+  var monthW = (calAreaW - (cols-1)*6) / cols;
+  var monthH = (calAreaH - (rows-1)*5) / rows;
+
+  // Color map for group ids
+  var GRP_RGB = {
+    offer:[29,78,216], financing:[13,148,136], dd:[234,88,12],
+    newsurvey:[109,40,217], insurance:[8,145,178], closing:[185,28,28]
+  };
+
+  months.forEach(function(monthDate, mi){
+    var col = mi % cols;
+    var row = Math.floor(mi / cols);
+    var mx = margin + col * (monthW + 6);
+    var my = calAreaTop + row * (monthH + 5);
+
+    var y = monthDate.getFullYear(), m = monthDate.getMonth();
+
+    // Month title
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor.apply(doc, PDF_COLORS.text);
+    doc.text(MNAMES[m] + ' ' + y, mx + monthW/2, my + 5, {align:'center'});
+
+    // Column headers
+    var cellW = monthW / 7;
+    var headerY = my + 8;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor.apply(doc, PDF_COLORS.muted);
+    DOW.forEach(function(d, di){
+      doc.text(d, mx + di*cellW + cellW/2, headerY, {align:'center'});
+    });
+
+    // Grid
+    var firstDay = new Date(y, m, 1).getDay();
+    var daysInMonth = new Date(y, m+1, 0).getDate();
+    var cellH = (monthH - 10) / 6;
+    var gridY = headerY + 2;
+
+    // Separator line under day headers
+    doc.setDrawColor.apply(doc, PDF_COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.line(mx, gridY, mx + monthW, gridY);
+
+    var dayCount = 0;
+    var totalCells = 42; // 6 rows × 7
+    for(var ci = 0; ci < totalCells; ci++){
+      var dayNum = ci - firstDay + 1;
+      var cx = mx + (ci % 7) * cellW;
+      var cy = gridY + Math.floor(ci / 7) * cellH;
+      var dow = ci % 7;
+
+      // Background
+      if(dayNum >= 1 && dayNum <= daysInMonth){
+        var cellDate = new Date(y, m, dayNum);
+        var cellYMD = toYMD(cellDate);
+        var isToday = (cellYMD === todayYMD);
+        var isWkd = (dow === 0 || dow === 6);
+        var isHol = isHoliday(cellDate);
+
+        if(isHol){
+          doc.setFillColor.apply(doc, [254,252,232]);
+          doc.rect(cx, cy, cellW, cellH, 'F');
+        } else if(isWkd){
+          doc.setFillColor.apply(doc, [241,245,249]);
+          doc.rect(cx, cy, cellW, cellH, 'F');
+        }
+
+        if(isToday){
+          doc.setDrawColor.apply(doc, PDF_COLORS.today);
+          doc.setLineWidth(0.5);
+          doc.rect(cx+0.3, cy+0.3, cellW-0.6, cellH-0.6);
+          doc.setLineWidth(0.2);
+          doc.setDrawColor.apply(doc, PDF_COLORS.border);
+        }
+
+        // Day number
+        var hasMil = !!milMap[cellYMD];
+        doc.setFont('helvetica', hasMil ? 'bold' : 'normal');
+        doc.setFontSize(6);
+        doc.setTextColor.apply(doc, hasMil ? PDF_COLORS.text : PDF_COLORS.muted);
+        doc.text(String(dayNum), cx + 1.5, cy + 4);
+
+        // Milestone badges
+        if(milMap[cellYMD]){
+          var badges = milMap[cellYMD];
+          var bx = cx + 1;
+          var by = cy + 5.5;
+          var bSize = 4;
+          badges.forEach(function(b, bi){
+            if(bx + bSize > cx + cellW - 0.5){
+              bx = cx + 1;
+              by += bSize + 1;
+            }
+            var rgb = GRP_RGB[b.groupId] || PDF_COLORS.text;
+            if(b.isGhost){
+              // Ghost: lighter opacity ring
+              doc.setDrawColor.apply(doc, rgb);
+              doc.setFillColor(255,255,255);
+              doc.setLineWidth(0.4);
+              doc.circle(bx + bSize/2, by + bSize/2, bSize/2, 'FD');
+              doc.setTextColor.apply(doc, rgb);
+            } else {
+              doc.setFillColor.apply(doc, rgb);
+              doc.circle(bx + bSize/2, by + bSize/2, bSize/2, 'F');
+              doc.setTextColor(255,255,255);
+            }
+            doc.setFont('helvetica','bold');
+            doc.setFontSize(4.5);
+            doc.text(String(b.num), bx + bSize/2, by + bSize/2 + bSize*0.18, {align:'center'});
+            bx += bSize + 1;
+          });
+        }
+      }
+
+      // Cell border
+      doc.setDrawColor.apply(doc, PDF_COLORS.border);
+      doc.setLineWidth(0.15);
+      doc.rect(cx, cy, cellW, cellH);
+    }
+  });
+
+  // ── Legend: group swatch row + numbered milestone table ──
+  // Place swatch row below the calendar grid
+  var lgY = calAreaTop + calAreaH + 4;
+  var lgX = margin;
+  var GRPS = [
+    {id:'offer',lbl:'Offer & Acceptance'},{id:'financing',lbl:'Financials'},
+    {id:'dd',lbl:'Due Diligence'},{id:'newsurvey',lbl:'New Survey'},
+    {id:'insurance',lbl:'Insurance'},{id:'closing',lbl:'Closing'},
+  ];
+  doc.setFontSize(6.5);
+  GRPS.forEach(function(g){
+    var rgb = GRP_RGB[g.id];
+    doc.setFillColor.apply(doc, rgb);
+    doc.circle(lgX+2, lgY-1, 2, 'F');
+    doc.setFont('helvetica','normal');
+    doc.setTextColor.apply(doc, PDF_COLORS.subtext);
+    doc.text(g.lbl, lgX+5.5, lgY);
+    lgX += doc.getTextWidth(g.lbl)+10;
+  });
+  doc.setDrawColor.apply(doc, PDF_COLORS.muted);
+  doc.setFillColor(255,255,255);
+  doc.circle(lgX+2, lgY-1, 2, 'FD');
+  doc.setTextColor.apply(doc, PDF_COLORS.muted);
+  doc.text('Rollover (Days Language)', lgX+5.5, lgY);
+
+  // ── Numbered milestone table via autoTable ──
+  var calLegBody = [];
+  var calCounter2 = 0;
+  var calLoanSup = !S.includeLoan;
+  GROUPS.forEach(function(grp){
+    var secIgnored2 = !!S.ignoredSections[grp.id];
+    var grpRgb2 = GRP_RGB[grp.id] || PDF_COLORS.text;
+    var grpRows2 = [];
+    grp.keys.forEach(function(k){
+      var fd = FD_MAP[k]; if(!fd) return;
+      var isIgnored2 = secIgnored2||(calLoanSup&&!!fd.loan)||!!S.ignored[k];
+      if(!fd.inputOnly&&!fd.isDefault) calCounter2++;
+      var num = calCounter2;
+      if(isIgnored2) return;
+      var date2 = computed.dates[k]; if(!date2) return;
+      var eff2 = computed.effective&&computed.effective[k];
+      var effStr2 = (eff2&&toYMD(eff2)!==toYMD(date2)) ? (' -> '+_pdfFmtShort(eff2)) : '';
+      var shortLbl2 = fd.lbl.replace(/ (\d+\..*?)$/,'').trim();
+      grpRows2.push([
+        { content:String(num), styles:{halign:'center',fontStyle:'bold',textColor:grpRgb2,fontSize:6.5} },
+        { content:shortLbl2,   styles:{fontSize:6.5,textColor:PDF_COLORS.text} },
+        { content:_pdfFmtShort(date2)+effStr2, styles:{fontSize:6,textColor:PDF_COLORS.subtext,halign:'right'} }
+      ]);
+    });
+    if(grpRows2.length){
+      calLegBody.push([{content:grp.lbl.toUpperCase(),colSpan:3,
+        styles:{fillColor:grpRgb2,textColor:[255,255,255],fontStyle:'bold',fontSize:6,
+                cellPadding:{top:2,bottom:2,left:3,right:3}}}]);
+      grpRows2.forEach(function(r){ calLegBody.push(r); });
+    }
+  });
+  if(calLegBody.length){
+    doc.autoTable({
+      body: calLegBody,
+      startY: lgY + 5,
+      margin: { left:margin, right:margin, top:26 },
+      tableWidth: pageW - margin*2,
+      styles:{ font:'helvetica', fontSize:6.5, cellPadding:{top:2,bottom:2,left:3,right:3},
+               overflow:'linebreak', lineColor:PDF_COLORS.border, lineWidth:0.15 },
+      alternateRowStyles:{ fillColor:[248,250,252] },
+      columnStyles:{
+        0: { cellWidth:14, halign:'center' },
+        1: { cellWidth:'auto' },
+        2: { cellWidth:42, halign:'right' }
+      },
+      didDrawPage: function(data){
+        _pdfPageHeader(doc, 'Transaction Calendar', subtitle, pageW);
+      }
+    });
+  }
+
+  // Stamp correct total pages on all pages
+  var calTotalPages = doc.internal.getNumberOfPages();
+  for(var cp=1; cp<=calTotalPages; cp++){
+    doc.setPage(cp);
+    _pdfPageFooter(doc, cp, calTotalPages, pageW, pageH);
+  }
+
+  var fn = (S.propertyName||'transaction').replace(/[^a-z0-9]/gi,'-').toLowerCase();
+  doc.save(fn+'-calendar.pdf');
+}
+
+/* ================================================================
+   HELP VIEW PDF
+   Full documentation, paginated
+   ================================================================ */
+function _pdfHelp(){
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'letter' });
+  var pageW = doc.internal.pageSize.getWidth();
+  var pageH = doc.internal.pageSize.getHeight();
+  var margin = 16;
+  var contentW = pageW - margin * 2;
+  var y = 26;
+
+  function ensureSpace(needed){
+    if(y + needed > pageH - 14){
+      doc.addPage();
+      _pdfPageHeader(doc, 'Help & Documentation', 'RE Transaction Date Calculator', pageW);
+      y = 26;
+    }
+  }
+
+  function drawSection(title, bodyLines){
+    ensureSpace(16);
+    // Section header bar
+    doc.setFillColor.apply(doc, PDF_COLORS.text);
+    doc.rect(margin, y, contentW, 7, 'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor(255,255,255);
+    doc.text(title, margin + 3, y + 5);
+    y += 9;
+
+    bodyLines.forEach(function(line){
+      if(line.type === 'p'){
+        ensureSpace(6);
+        doc.setFont('helvetica', line.bold ? 'bold' : 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor.apply(doc, PDF_COLORS.text);
+        var wrapped = doc.splitTextToSize(line.text, contentW - 2);
+        wrapped.forEach(function(l){
+          ensureSpace(5);
+          doc.text(l, margin + 2, y);
+          y += 4.5;
+        });
+        y += 1;
+      } else if(line.type === 'bullet'){
+        ensureSpace(5);
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(8);
+        doc.setTextColor.apply(doc, PDF_COLORS.subtext);
+        doc.text('•', margin + 3, y);
+        var wrapped = doc.splitTextToSize(line.text, contentW - 10);
+        wrapped.forEach(function(l, li){
+          ensureSpace(5);
+          doc.text(l, margin + 7, y);
+          y += 4.5;
+        });
+      } else if(line.type === 'table'){
+        ensureSpace(20);
+        doc.autoTable({
+          head:[line.head],
+          body:line.rows,
+          startY:y,
+          margin:{left:margin, right:margin},
+          tableWidth:contentW,
+          styles:{fontSize:7.5,cellPadding:{top:2,bottom:2,left:3,right:3},lineColor:PDF_COLORS.border,lineWidth:0.2},
+          headStyles:{fillColor:PDF_COLORS.text,textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},
+          alternateRowStyles:{fillColor:[248,250,252]},
+          didDrawPage:function(data){
+            _pdfPageHeader(doc,'Help & Documentation','RE Transaction Date Calculator',pageW);
+          }
+        });
+        y = doc.lastAutoTable.finalY + 4;
+      }
+    });
+    y += 3;
+  }
+
+  _pdfPageHeader(doc, 'Help & Documentation', 'RE Transaction Date Calculator', pageW);
+
+  drawSection('Overview', [
+    {type:'p', text:'The RE Transaction Date Calculator automatically computes all contract milestone dates from your Offer Date and Acceptance Date. Dates use configurable day offsets anchored to key transaction events, organized into six milestone groups each cross-referenced to the relevant contract section number.'},
+    {type:'p', bold:true, text:'Business Day Rollover:'},
+    {type:'p', text:'When a calculated date falls on a weekend or holiday, an Effective Date is shown. This is the next business day — what the contract performs to under Days language. The date field is flagged amber. The Closing Date is never auto-rolled; it shows red with "Business Day Required" as a prompt.'},
+  ]);
+
+  drawSection('Pro Tip — Get Started', [
+    {type:'bullet', text:'Add the Property Address in the Property field at the top.'},
+    {type:'bullet', text:'Pick a template (30, 45, or 60 Day Close) and customize offer dates. Each template sets Loan and Survey toggles automatically.'},
+    {type:'bullet', text:'Save Transaction from the ⋯ menu to create a .json file you can reload at any time.'},
+    {type:'bullet', text:'When offer is accepted: Load Transaction, update the Acceptance Date — all milestones recalculate instantly. Then Print or Export Calendar.'},
+  ]);
+
+  drawSection('Calculation Modes', [
+    {type:'table',
+      head:['Mode','Loan','New Survey','Closing'],
+      rows:[
+        ['30 Day Close','No (off)','No (off)','30 days from Acceptance'],
+        ['45 Day Close','Yes (on)','No (off)','45 days from Acceptance'],
+        ['60 Day Close','Yes (on)','Yes (on)','60 days from Acceptance'],
+        ['My Preset','Yes (on)','Yes (on)','Configurable'],
+        ['Custom','Yes (on)','Yes (on)','Spinner or banner input'],
+      ]
+    },
+  ]);
+
+  drawSection('Date & Day Overrides', [
+    {type:'p', text:'Each milestone shows a Days spinner pre-filled with the preset offset. Changing it shifts the milestone for the current session only — the preset is not modified. Clearing the spinner restores the preset value.'},
+    {type:'bullet', text:'Close-anchored fields (Repair Completion, Final Walkthrough, etc.) accept 0 or negative values only.'},
+    {type:'bullet', text:'All other calculated fields accept 0 or positive values only.'},
+    {type:'bullet', text:'0 days = same date as the anchor event.'},
+    {type:'p', text:'The date picker in the Calculated Date column updates the spinner to reflect the computed offset from the anchor — both controls stay in sync. The ↺ reset button clears both.'},
+  ]);
+
+  drawSection('Skip & Loan / Survey Toggles', [
+    {type:'p', text:'Fields with a Skip button can be excluded from printouts and calendar export. Active state turns red. Saved with the transaction.'},
+    {type:'p', text:'The Loan: Yes/No pill in the Financials header suppresses Pre-qualification Letter, Loan Application, and Final Loan Approval. Session-only — resets to default on mode switch.'},
+    {type:'p', text:'The Survey: Yes/No pill in the New Survey header ignores all four New Survey milestones. Saved with the transaction.'},
+  ]);
+
+  drawSection('Save & Load Transactions', [
+    {type:'p', text:'Use Save Transaction (⋯ menu) to save the current transaction as a .json file. Use Load Transaction to restore it later on any machine.'},
+    {type:'p', bold:true, text:'What is saved:'},
+    {type:'bullet', text:'Property name, Offer Date, mode, Custom Closing Date'},
+    {type:'bullet', text:'All date picker overrides, Skip states, Loan/Survey toggle, DD Resolution anchor, Existing Doc anchor'},
+    {type:'p', bold:true, text:'What is NOT saved (session-only):'},
+    {type:'bullet', text:'Days spinner overrides — use Save to My Preset to preserve them'},
+    {type:'bullet', text:'Preset offsets and holiday list — use Export Settings'},
+  ]);
+
+  drawSection('Calendar Export', [
+    {type:'p', text:'Downloads an .ics file of all visible, non-skipped milestones as all-day calendar events. Import into Google Calendar, Outlook, or Apple Calendar.'},
+    {type:'p', text:'When a date was rolled forward, the calendar event description notes the original Calculated Date.'},
+  ]);
+
+  drawSection('Settings — Presets & Holidays', [
+    {type:'p', text:'Open Settings → Presets to customize default day counts for the 30 Day, 45 Day, 60 Day, or My Preset templates. Changes save immediately to your browser.'},
+    {type:'p', text:'Open Settings → Holidays to manage the holiday list for business day rollover. The default list includes 11 US federal holidays. Add custom holidays by month and day (repeating annually).'},
+    {type:'p', text:'Use Export Settings / Import Settings in the Settings footer to share a configuration across a team or back up your customizations. Settings are stored in localStorage — export regularly.'},
+  ]);
+
+  // Add page numbers
+  var totalPages = doc.internal.getNumberOfPages();
+  for(var p = 1; p <= totalPages; p++){
+    doc.setPage(p);
+    _pdfPageFooter(doc, p, totalPages, pageW, pageH);
+  }
+
+  doc.save('re-transaction-calculator-help.pdf');
+}
+
+/* ================================================================
+   TIMELINE PDF
+   Swim lane chart — one lane per active group, dots tiered to
+   avoid overlap, numbered legend below.
+   ================================================================ */
+function _pdfTimeline(){
+  var computed = calc();
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'letter' });
+  var pageW = doc.internal.pageSize.getWidth();
+  var pageH = doc.internal.pageSize.getHeight();
+  var mg    = 14;
+  var subtitle = _pdfSubtitle(computed);
+  var loanSuppressed = !S.includeLoan;
+
+  var td = _buildTimelineData(computed);
+  if(!td){ alert('No dates to export.'); return; }
+
+  // ── Build per-group milestone lists ──
+  var groupItems = {};
+  td.GROUP_META.forEach(function(g){ groupItems[g.id] = []; });
+  var counter = 0;
+  GROUPS.forEach(function(grp){
+    var secIgnored = !!S.ignoredSections[grp.id];
+    grp.keys.forEach(function(k){
+      var fd = FD_MAP[k]; if(!fd) return;
+      var isIgnored = secIgnored||(loanSuppressed&&!!fd.loan)||!!S.ignored[k];
+      if(!fd.inputOnly&&!fd.isDefault) counter++;
+      var num = counter;
+      if(isIgnored) return;
+      var date = computed.dates[k]; if(!date) return;
+      var eff = computed.effective&&computed.effective[k];
+      if(groupItems[grp.id])
+        groupItems[grp.id].push({num:num,lbl:fd.lbl,key:k,date:date,
+          effDate:(eff&&toYMD(eff)!==toYMD(date))?eff:null});
+    });
+  });
+
+  var COLLISION_PCT = 3.5;
+  function assignTiers(items){
+    if(!items.length) return {items:items,tiers:1};
+    var sorted = items.slice().sort(function(a,b){return a.date-b.date;});
+    var tierEnds = [];
+    sorted.forEach(function(item){
+      var p = td.pct(item.date); var placed=false;
+      for(var t=0;t<tierEnds.length;t++){
+        if(p-tierEnds[t]>=COLLISION_PCT){ item.tier=t; tierEnds[t]=p; placed=true; break; }
+      }
+      if(!placed){ item.tier=tierEnds.length; tierEnds.push(p); }
+    });
+    return {items:items,tiers:tierEnds.length};
+  }
+
+  var labelW = 36;
+  var trackX = mg + labelW + 3;
+  var trackW = pageW - trackX - mg;
+  var DOT_R  = 2.8;
+  var TIER_H = 8;
+
+  var activeGroups = td.GROUP_META.filter(function(g){
+    return groupItems[g.id] && groupItems[g.id].length > 0;
+  });
+
+  var laneHeights = activeGroups.map(function(g){
+    var r = assignTiers(groupItems[g.id]);
+    return {meta:g, items:groupItems[g.id], tiers:r.tiers, laneH:r.tiers*TIER_H};
+  });
+  var totalLaneH = laneHeights.reduce(function(s,l){return s+l.laneH+2;},0);
+
+  var startY = 26;
+  // Reserve space: chart + axis labels + separator + legend header + legend rows
+  // Legend: ~5mm per item, 3 columns. Estimate rows needed.
+  var totalItems = activeGroups.reduce(function(s,g){ return s+(groupItems[g.id]||[]).length; },0);
+  var lgRowH = 5;
+  var lgCols = 3;
+  var lgRowsNeeded = Math.ceil(totalItems / lgCols) + activeGroups.length; // items + group headers
+  var lgH = lgRowsNeeded * lgRowH + 12; // +header row + separator
+  var maxAvail = pageH - startY - 12 - lgH; // 12 = axis labels
+
+  if(totalLaneH > maxAvail && maxAvail > 10){
+    var scale = maxAvail / totalLaneH;
+    TIER_H = Math.max(TIER_H * scale, 4);
+    DOT_R  = Math.max(DOT_R * scale, 1.4);
+    laneHeights.forEach(function(l){ l.laneH = l.tiers * TIER_H; });
+    totalLaneH = laneHeights.reduce(function(s,l){return s+l.laneH+2;},0);
+  }
+
+  function tX(p){ return trackX + (p/100)*trackW; }
+
+  _pdfPageHeader(doc, 'Transaction Story', subtitle, pageW);
+
+  // ── Grid lines + urgency zones ──
+  var gridTop = startY, gridBot = startY + totalLaneH;
+  td.gridLines.forEach(function(gl){
+    doc.setDrawColor.apply(doc, gl.isMonth?PDF_COLORS.border:[240,244,248]);
+    doc.setLineWidth(gl.isMonth?0.25:0.1);
+    doc.line(tX(gl.pct), gridTop, tX(gl.pct), gridBot);
+  });
+  td.urgencyZones.forEach(function(uz){
+    var isRed = uz.color.indexOf('239')>=0;
+    doc.setFillColor.apply(doc, isRed?[255,235,235]:[255,253,235]);
+    doc.rect(tX(uz.left), gridTop, tX(uz.right)-tX(uz.left), totalLaneH, 'F');
+  });
+
+  // ── Anchor labels above chart ──
+  var anchorColors = {Offer:[29,78,216], Acceptance:[13,148,136], Closing:[185,28,28]};
+  td.anchors.forEach(function(a){
+    var ax = tX(a.pct);
+    var rgb = anchorColors[a.lbl] || PDF_COLORS.text;
+    doc.setFillColor.apply(doc, rgb);
+    doc.setFont('helvetica','bold'); doc.setFontSize(5.5);
+    doc.setTextColor(255,255,255);
+    var tw = doc.getTextWidth(a.lbl) + 4;
+    doc.roundedRect(ax-tw/2, startY-6, tw, 5, 1, 1, 'F');
+    doc.text(a.lbl, ax, startY-2.8, {align:'center'});
+    // Drop line
+    doc.setDrawColor.apply(doc, rgb);
+    doc.setLineWidth(0.3);
+    doc.line(ax, startY-1, ax, gridBot);
+  });
+
+  // ── Swim lanes ──
+  var curY = startY;
+  laneHeights.forEach(function(lane){
+    var meta = lane.meta;
+    var laneH = lane.laneH;
+
+    // Axis lines per tier
+    for(var t=0; t<lane.tiers; t++){
+      var ay = curY + t*TIER_H + TIER_H/2;
+      doc.setDrawColor.apply(doc, t===0?PDF_COLORS.border:[240,244,248]);
+      doc.setLineWidth(t===0?0.4:0.15);
+      doc.line(trackX, ay, pageW-mg, ay);
+    }
+
+    // Label pill centred on lane
+    var pillCy = curY + laneH/2;
+    doc.setFillColor.apply(doc, meta.rgb);
+    doc.roundedRect(mg, pillCy-3.5, labelW-2, 7, 1.5, 1.5, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6);
+    doc.setTextColor(255,255,255);
+    doc.text(meta.lbl, mg+(labelW-2)/2, pillCy+1.1, {align:'center'});
+
+    // Dots — fix badge centering: baseline offset = DOT_R * 0.35 (empirical for Helvetica)
+    lane.items.forEach(function(item){
+      var p  = td.pct(item.date);
+      var t  = item.tier || 0;
+      var dy = curY + t*TIER_H + TIER_H/2;
+      var dx = tX(p);
+      var baselineOff = DOT_R * 0.35; // visually centres cap-height text in circle
+
+      doc.setFillColor.apply(doc, meta.rgb);
+      doc.circle(dx, dy, DOT_R, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(DOT_R*1.4);
+      doc.setTextColor(255,255,255);
+      doc.text(String(item.num), dx, dy+baselineOff, {align:'center'});
+
+      if(item.effDate){
+        var ex = tX(td.pct(item.effDate));
+        doc.setFillColor(255,255,255);
+        doc.setDrawColor.apply(doc, meta.rgb);
+        doc.setLineWidth(0.3);
+        doc.circle(ex, dy, DOT_R, 'FD');
+        doc.setFont('helvetica','bold'); doc.setFontSize(DOT_R*1.4);
+        doc.setTextColor.apply(doc, meta.rgb);
+        doc.text(String(item.num), ex, dy+baselineOff, {align:'center'});
+      }
+    });
+
+    curY += laneH + 2;
+  });
+
+  // ── Axis tick labels ──
+  var axisLblY = curY + 5;
+  td.gridLines.forEach(function(gl){
+    if(gl.isMonth||td.useWeeks){
+      doc.setFont('helvetica',gl.isMonth?'bold':'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor.apply(doc, gl.isMonth?PDF_COLORS.subtext:PDF_COLORS.muted);
+      doc.text(gl.label, tX(gl.pct), axisLblY, {align:'center'});
+    }
+  });
+
+  // ── Legend — use autoTable for clean layout, ASCII-safe labels ──
+  var lgStartY = axisLblY + 6;
+  // Build legend rows for autoTable: [dot-num, name, date]
+  var lgBody = [];
+  activeGroups.forEach(function(meta){
+    var items2 = groupItems[meta.id]; if(!items2||!items2.length) return;
+    // Section header row
+    lgBody.push([{
+      content: meta.lbl.toUpperCase(),
+      colSpan: 3,
+      styles:{ fillColor:meta.rgb, textColor:[255,255,255], fontStyle:'bold',
+               fontSize:6, cellPadding:{top:2,bottom:2,left:3,right:3} }
+    }]);
+    items2.forEach(function(item){
+      var dateStr = _pdfFmtShort(item.date);
+      // ASCII-safe: no Unicode arrows or ellipsis
+      var effStr  = item.effDate ? (' -> '+_pdfFmtShort(item.effDate)) : '';
+      // Truncate name cleanly — no Unicode ellipsis
+      var shortLbl = item.lbl.replace(/ (\d+\..*?)$/,'').trim();
+      lgBody.push([
+        { content:String(item.num),
+          styles:{ halign:'center', fontStyle:'bold', textColor:meta.rgb, fontSize:6.5 } },
+        { content:shortLbl,
+          styles:{ fontSize:6.5, textColor:PDF_COLORS.text } },
+        { content:dateStr+effStr,
+          styles:{ fontSize:6, textColor:PDF_COLORS.subtext, halign:'right' } }
+      ]);
+    });
+  });
+
+  // Split into 3 equal-width columns using autoTable's columnStyles
+  var colW = (pageW - mg*2) / 3;
+  // We'll just do a single-table approach spanning full width —
+  // autoTable handles pagination cleanly
+  doc.autoTable({
+    body: lgBody,
+    startY: lgStartY,
+    // margin.top must clear the page header (20mm header + 5mm gap = 25mm)
+    margin: { left:mg, right:mg, top:26 },
+    tableWidth: pageW - mg*2,
+    styles:{ font:'helvetica', fontSize:6.5, cellPadding:{top:2.5,bottom:2.5,left:4,right:4},
+             overflow:'linebreak', lineColor:PDF_COLORS.border, lineWidth:0.15 },
+    headStyles:{ fillColor:PDF_COLORS.text, textColor:[255,255,255] },
+    alternateRowStyles:{ fillColor:[248,250,252] },
+    columnStyles:{
+      0: { cellWidth:14, halign:'center' },
+      1: { cellWidth:'auto' },
+      2: { cellWidth:42, halign:'right' }
+    },
+    didDrawPage: function(data){
+      _pdfPageHeader(doc, 'Transaction Story', subtitle, pageW);
+    }
+  });
+
+  // Stamp page footers
+  var totalPages = doc.internal.getNumberOfPages();
+  for(var p=1; p<=totalPages; p++){
+    doc.setPage(p);
+    _pdfPageFooter(doc, p, totalPages, pageW, pageH);
+  }
+
+  var fn=(S.propertyName||'transaction').replace(/[^a-z0-9]/gi,'-').toLowerCase();
+  doc.save(fn+'-timeline.pdf');
+}
+
+
+
+/* ================================================================
+   ENTRY POINT — called by Print button
+   Dispatches to the correct PDF function based on active view
+   ================================================================ */
+function generatePDF(){
+  if(typeof window.jspdf === 'undefined'){
+    alert('PDF library not loaded. Please check your internet connection and try again.');
+    return;
+  }
+  var view = _calView || 'detail';
+  if(view === 'detail')        _pdfDetail();
+  else if(view === 'calendar') _pdfCalendar();
+  else if(view === 'timeline') _pdfTimeline();
+  else if(view === 'help')     _pdfHelp();
+}
+
+
+/* ============================================================
+   INIT
+   Loads persisted settings, sets today as the default offer date,
+   performs initial render, and attaches the click-outside handler
+   for the ⋯ more menu.
+   ============================================================ */
+S.settings=loadSettings();
+S.offerDate=toYMD(new Date());
+// Apply 30 Day Close defaults on initial load
+S.ignored={icActual:true};
+S.includeLoan=false;
+S.ignoredSections={newsurvey:true};
+render();
+
+// Close ⋯ menu when clicking outside it
+document.addEventListener('click', function(e){
+  var btn=document.getElementById('moreMenuBtn');
+  if(btn && !btn.contains(e.target)){
+    document.getElementById('moreMenu').classList.remove('open');
+  }
+});
+
+// Handle Ctrl/Cmd+P — tag body with current view for print CSS
+window.addEventListener('beforeprint', function(){
+  document.body.setAttribute('data-print-view', _calView||'detail');
+});
+window.addEventListener('afterprint', function(){
+  document.body.removeAttribute('data-print-view');
+});
+
+})();
+</script>
+</body>
+</html>
