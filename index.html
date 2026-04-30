@@ -719,10 +719,10 @@ var FD = [
   { n:13, k:'newSurveyOrder',         lbl:'New Survey Order (40. B. i.)',                     offKey:'newSurveyOrder',         anch:'titleReceipt', anchLbl:'Title Commitment Receipt', needsTitle:true },
   { n:14, k:'dueDiligenceObjection',  lbl:'Due Diligence Objection (33. A.)',                 offKey:'dueDiligenceObjection',  anch:'acceptance',   anchLbl:'Acceptance' },
   { n:15, k:'dueDiligenceResolution', lbl:'Due Diligence Resolution (33. D.)',                offKey:'dueDiligenceResolution', anch:'ddObjection',  anchLbl:'DD Objection' },
-  { n:26, k:'sellerInspectionOrder',  lbl:'Septic System & Other Seller Ordered Inspections Order (5138 3.)',                offKey:'sellerInspectionOrder',  anch:'acceptance',   anchLbl:'Acceptance' },
-  { n:27, k:'sellerInspectionDelivery', lbl:'Septic System & Other Seller Ordered Inspections Delivery (5138 4.)',           offKey:'sellerInspectionDelivery', anch:'acceptance', anchLbl:'Acceptance' },
-  { n:28, k:'septicInspection',         lbl:'Septic System & Other Seller Ordered Inspections Objection (5138 5.)', offKey:'septicInspection', anch:'sellerInspectionDelivery', anchLbl:'Septic System & Other Seller Ordered Inspections Delivery (5138 4.)' },
-  { n:29, k:'septicInspectionResolution', lbl:'Septic System & Other Seller Ordered Inspections Resolution (5138 6.)', offKey:'septicInspectionResolution', anch:'septicInspection', anchLbl:'Septic System & Other Seller Ordered Inspections Objection (5138 5.)' },
+  { n:26, k:'sellerInspectionOrder',  lbl:'Septic & Seller Ordered Inspections Order (5138 3.)',                offKey:'sellerInspectionOrder',  anch:'acceptance',   anchLbl:'Acceptance' },
+  { n:27, k:'sellerInspectionDelivery', lbl:'Septic & Seller Ordered Inspections Delivery (5138 4.)',           offKey:'sellerInspectionDelivery', anch:'acceptance', anchLbl:'Acceptance' },
+  { n:28, k:'septicInspection',         lbl:'Septic & Seller Ordered Inspections Objection (5138 5.)', offKey:'septicInspection', anch:'sellerInspectionDelivery', anchLbl:'Septic & Seller Ordered Inspections Delivery (5138 4.)' },
+  { n:29, k:'septicInspectionResolution', lbl:'Septic & Seller Ordered Inspections Resolution (5138 6.)', offKey:'septicInspectionResolution', anch:'septicInspection', anchLbl:'Septic & Seller Ordered Inspections Objection (5138 5.)' },
   { n:16, k:'loanContingency',        lbl:'Final Loan Approval (8. C. iv.)',                  offKey:'loanContingency',        anch:'close',        anchLbl:'Closing',    loan:true },
   { n:25, k:'prequalLetter',          lbl:'Pre-qualification Letter (8. C. i.)',              offKey:'prequalLetter',          anch:'acceptance',   anchLbl:'Acceptance', loan:true },
   { n:17, k:'newSurveyDelivery',      lbl:'New Survey Delivery (40. B. ii.)',                 offKey:'newSurveyDelivery',      anch:'close',        anchLbl:'Closing' },
@@ -1054,7 +1054,7 @@ function calc(){
     dates.existingDocDelivery=resolved('existingDocDelivery',null);
   }
 
-  // 4b. Septic System & Other Seller Ordered Inspections Objection (anchored to Seller Inspection Delivery)
+  // 4b. Septic & Seller Ordered Inspections Objection (anchored to Seller Inspection Delivery)
   if(shouldCalc('septicInspection')){
     var sid=dates.sellerInspectionDelivery;
     dates.septicInspection=resolved('septicInspection', sid?applyOff('septicInspection', sid, effectiveOff('septicInspection')):null);
@@ -1062,7 +1062,7 @@ function calc(){
     dates.septicInspection=resolved('septicInspection',null);
   }
 
-  // 4c. Septic System & Other Seller Ordered Inspections Resolution (anchored to Objection)
+  // 4c. Septic & Seller Ordered Inspections Resolution (anchored to Objection)
   if(shouldCalc('septicInspectionResolution')){
     var sobj=dates.septicInspection;
     dates.septicInspectionResolution=resolved('septicInspectionResolution', sobj?applyOff('septicInspectionResolution', sobj, effectiveOff('septicInspectionResolution')):null);
@@ -1191,10 +1191,10 @@ function anchorColHtml(fd){
       ['titleCommitment',          'Title Commitment Receipt'],
       ['existingDocDelivery',      'Existing Document Delivery (32.)'],
       ['existingSurveyDelivery',   'Existing Survey Delivery (40. A. i.)'],
-      ['sellerInspectionOrder',    'Septic System & Other Seller Ordered Inspections Order (5138 3.)'],
-      ['sellerInspectionDelivery', 'Septic System & Other Seller Ordered Inspections Delivery (5138 4.)'],
-      ['septicInspection',         'Septic System & Other Seller Ordered Inspections Objection (5138 5.)'],
-      ['septicInspectionResolution','Septic System & Other Seller Ordered Inspections Resolution (5138 6.)'],
+      ['sellerInspectionOrder',    'Septic & Seller Ordered Inspections Order (5138 3.)'],
+      ['sellerInspectionDelivery', 'Septic & Seller Ordered Inspections Delivery (5138 4.)'],
+      ['septicInspection',         'Septic & Seller Ordered Inspections Objection (5138 5.)'],
+      ['septicInspectionResolution','Septic & Seller Ordered Inspections Resolution (5138 6.)'],
       ['dueDiligenceObjection',    'Due Diligence Objection (33. A.)']
     ];
     var sel='<select class="anchor-sel" onchange="App.setDdrAnchor(this.value)">';
@@ -1551,10 +1551,10 @@ function _renderPresetSettings(){
     {k:'appraisalOrder',         l:'Appraisal Order (10. A. i. or ii.)',             a:'Acceptance'},
     {k:'existingDocDelivery',    l:'Existing Document Delivery (32.)',               a:'Acceptance/IC'},
     {k:'existingSurveyDelivery', l:'Existing Survey Delivery (40. A. i.)',           a:'Acceptance'},
-    {k:'sellerInspectionOrder',   l:'Septic System & Other Seller Ordered Inspections Order (5138 3.)',      a:'Acceptance'},
-    {k:'sellerInspectionDelivery',l:'Septic System & Other Seller Ordered Inspections Delivery (5138 4.)',   a:'Acceptance'},
-    {k:'septicInspection',        l:'Septic System & Other Seller Ordered Inspections Objection (5138 5.)',  a:'Septic System & Other Seller Ordered Inspections Delivery (5138 4.)'},
-    {k:'septicInspectionResolution',l:'Septic System & Other Seller Ordered Inspections Resolution (5138 6.)', a:'Septic System & Other Seller Ordered Inspections Objection (5138 5.)'},
+    {k:'sellerInspectionOrder',   l:'Septic & Seller Ordered Inspections Order (5138 3.)',      a:'Acceptance'},
+    {k:'sellerInspectionDelivery',l:'Septic & Seller Ordered Inspections Delivery (5138 4.)',   a:'Acceptance'},
+    {k:'septicInspection',        l:'Septic & Seller Ordered Inspections Objection (5138 5.)',  a:'Septic & Seller Ordered Inspections Delivery (5138 4.)'},
+    {k:'septicInspectionResolution',l:'Septic & Seller Ordered Inspections Resolution (5138 6.)', a:'Septic & Seller Ordered Inspections Objection (5138 5.)'},
     {k:'dueDiligenceObjection',  l:'Due Diligence Objection (33. A.)',               a:'Acceptance'},
     {k:'dueDiligenceResolution', l:'Due Diligence Resolution (33. D.)',              a:'DD Objection (default — anchor selectable in Detail View)'},
     {k:'loanContingency',        l:'Final Loan Approval (8. C. iv.)',               a:'Closing',    loan:true},
