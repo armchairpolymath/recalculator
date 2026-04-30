@@ -721,6 +721,7 @@ var FD = [
   { n:15, k:'dueDiligenceResolution', lbl:'Due Diligence Resolution (33. D.)',                offKey:'dueDiligenceResolution', anch:'ddObjection',  anchLbl:'DD Objection' },
   { n:26, k:'sellerInspectionOrder',  lbl:'Seller Inspection Order (5138 3.)',                offKey:'sellerInspectionOrder',  anch:'acceptance',   anchLbl:'Acceptance' },
   { n:27, k:'sellerInspectionDelivery', lbl:'Seller Inspection Delivery (5138 4.)',           offKey:'sellerInspectionDelivery', anch:'acceptance', anchLbl:'Acceptance' },
+  { n:28, k:'septicInspection',         lbl:'Septic System and Other Seller Ordered Inspections (5138 5.)', offKey:'septicInspection', anch:'sellerInspectionDelivery', anchLbl:'Seller Inspection Delivery' },
   { n:16, k:'loanContingency',        lbl:'Final Loan Approval (8. C. iv.)',                  offKey:'loanContingency',        anch:'close',        anchLbl:'Closing',    loan:true },
   { n:25, k:'prequalLetter',          lbl:'Pre-qualification Letter (8. C. i.)',              offKey:'prequalLetter',          anch:'acceptance',   anchLbl:'Acceptance', loan:true },
   { n:17, k:'newSurveyDelivery',      lbl:'New Survey Delivery (40. B. ii.)',                 offKey:'newSurveyDelivery',      anch:'close',        anchLbl:'Closing' },
@@ -748,7 +749,7 @@ var GROUPS = [
     keys:['proofOfFunds','prequalLetter','loanApplication','appraisalOrder','loanContingency'] },
   { id:'dd',       icon:'🔍', lbl:'Due Diligence',
     keys:['titleCommitment','existingDocDelivery','existingSurveyDelivery',
-          'sellerInspectionOrder','sellerInspectionDelivery',
+          'sellerInspectionOrder','sellerInspectionDelivery','septicInspection',
           'dueDiligenceObjection','dueDiligenceResolution'] },
   { id:'newsurvey',icon:'📐', lbl:'New Survey',
     keys:['newSurveyOrder','newSurveyDelivery','newSurveyObjection','newSurveyResolution'] },
@@ -767,7 +768,7 @@ var GROUPS = [
 var DEF40 = {
   offerExpiration:2,  earnestMoneyDue:3,  icDue:3,  loanApplication:1,
   appraisalOrder:3,   existingDocDelivery:5,  existingSurveyDelivery:5,
-  sellerInspectionOrder:3, sellerInspectionDelivery:17,
+  sellerInspectionOrder:3, sellerInspectionDelivery:17, septicInspection:3,
   dueDiligenceObjection:20, dueDiligenceResolution:5,
   loanContingency:0,  newSurveyOrder:3,   closingDate:30, proofOfFunds:1, prequalLetter:7,
   newSurveyDelivery:-15, newSurveyObjection:-10, newSurveyResolution:-5,
@@ -776,7 +777,7 @@ var DEF40 = {
 var DEF45 = {
   offerExpiration:2,  earnestMoneyDue:3,  icDue:3,  loanApplication:1,
   appraisalOrder:3,   existingDocDelivery:5,  existingSurveyDelivery:5,
-  sellerInspectionOrder:3, sellerInspectionDelivery:21,
+  sellerInspectionOrder:3, sellerInspectionDelivery:21, septicInspection:5,
   dueDiligenceObjection:25, dueDiligenceResolution:5,
   loanContingency:0,  newSurveyOrder:3,   closingDate:45, proofOfFunds:1, prequalLetter:7,
   newSurveyDelivery:-15, newSurveyObjection:-10, newSurveyResolution:-5,
@@ -785,7 +786,7 @@ var DEF45 = {
 var DEF60 = {
   offerExpiration:2,  earnestMoneyDue:3,  icDue:3,  loanApplication:1,
   appraisalOrder:3,   existingDocDelivery:5,  existingSurveyDelivery:5,
-  sellerInspectionOrder:3, sellerInspectionDelivery:28,
+  sellerInspectionOrder:3, sellerInspectionDelivery:28, septicInspection:5,
   dueDiligenceObjection:32, dueDiligenceResolution:5,
   loanContingency:0,  newSurveyOrder:3,   closingDate:60, proofOfFunds:1, prequalLetter:7,
   newSurveyDelivery:-15, newSurveyObjection:-10, newSurveyResolution:-5,
@@ -794,7 +795,7 @@ var DEF60 = {
 var DEF_USER = {
   offerExpiration:0,  earnestMoneyDue:0,  icDue:0,  loanApplication:0,
   appraisalOrder:0,   existingDocDelivery:0, existingSurveyDelivery:0,
-  sellerInspectionOrder:0, sellerInspectionDelivery:0,
+  sellerInspectionOrder:0, sellerInspectionDelivery:0, septicInspection:0,
   dueDiligenceObjection:0, dueDiligenceResolution:0,
   loanContingency:0,  newSurveyOrder:0,   closingDate:0, proofOfFunds:0, prequalLetter:0,
   newSurveyDelivery:0, newSurveyObjection:0, newSurveyResolution:0,
@@ -1052,6 +1053,14 @@ function calc(){
     dates.existingDocDelivery=resolved('existingDocDelivery',null);
   }
 
+  // 4b. Septic Inspection (anchored to Seller Inspection Delivery)
+  if(shouldCalc('septicInspection')){
+    var sid=dates.sellerInspectionDelivery;
+    dates.septicInspection=resolved('septicInspection', sid?applyOff('septicInspection', sid, effectiveOff('septicInspection')):null);
+  } else {
+    dates.septicInspection=resolved('septicInspection',null);
+  }
+
   // 7a. Due Diligence Objection (acceptance-anchored)
   if(shouldCalc('dueDiligenceObjection')){
     dates.dueDiligenceObjection=resolved('dueDiligenceObjection', acc?applyOff('dueDiligenceObjection', acc, effectiveOff('dueDiligenceObjection')):null);
@@ -1175,6 +1184,7 @@ function anchorColHtml(fd){
       ['existingSurveyDelivery',   'Existing Survey Delivery (40. A. i.)'],
       ['sellerInspectionOrder',    'Seller Inspection Order (5138 3.)'],
       ['sellerInspectionDelivery', 'Seller Inspection Delivery (5138 4.)'],
+      ['septicInspection',         'Septic System and Other Seller Ordered Inspections (5138 5.)'],
       ['dueDiligenceObjection',    'Due Diligence Objection (33. A.)']
     ];
     var sel='<select class="anchor-sel" onchange="App.setDdrAnchor(this.value)">';
@@ -1405,7 +1415,7 @@ function _renderGroups(computed){
       +'</tr></thead><tbody>');
 
     // Fields that get individual ignore checkboxes
-    var IGNORABLE=['icActual','proofOfFunds','appraisalOrder','existingSurveyDelivery','sellerInspectionOrder','sellerInspectionDelivery'];
+    var IGNORABLE=['icActual','proofOfFunds','appraisalOrder','existingSurveyDelivery','sellerInspectionOrder','sellerInspectionDelivery','septicInspection'];
 
     keys.forEach(function(k){
       var fd=FD_MAP[k];
@@ -1533,6 +1543,7 @@ function _renderPresetSettings(){
     {k:'existingSurveyDelivery', l:'Existing Survey Delivery (40. A. i.)',           a:'Acceptance'},
     {k:'sellerInspectionOrder',   l:'Seller Inspection Order (5138 3.)',             a:'Acceptance'},
     {k:'sellerInspectionDelivery',l:'Seller Inspection Delivery (5138 4.)',          a:'Acceptance'},
+    {k:'septicInspection',        l:'Septic System and Other Seller Ordered Inspections (5138 5.)', a:'Seller Inspection Delivery'},
     {k:'dueDiligenceObjection',  l:'Due Diligence Objection (33. A.)',               a:'Acceptance'},
     {k:'dueDiligenceResolution', l:'Due Diligence Resolution (33. D.)',              a:'DD Objection (default — anchor selectable in Detail View)'},
     {k:'loanContingency',        l:'Final Loan Approval (8. C. iv.)',               a:'Closing',    loan:true},
@@ -2624,6 +2635,7 @@ function _pdfDetail(){
           appraisalOrder:'Appraisal Order', titleCommitment:'Title Commitment',
           existingDocDelivery:'Existing Doc Delivery', existingSurveyDelivery:'Existing Survey',
           sellerInspectionOrder:'Seller Insp. Order', sellerInspectionDelivery:'Seller Insp. Delivery',
+          septicInspection:'Septic Inspection',
           dueDiligenceObjection:'DD Objection'
         };
         anchLbl = ddrMap[S.ddrAnchor] || 'DD Objection';
